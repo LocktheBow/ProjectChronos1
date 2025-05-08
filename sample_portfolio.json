@@ -1,0 +1,6 @@
+[
+  {"name": "Foo LLC", "jurisdiction": "DE", "formed": "2024-01-01"},
+  {"name": "Bar Inc", "jurisdiction": "NY", "formed": "2023-06-01", "status": "ACTIVE"},
+  {"name": "Baz GmbH", "jurisdiction": "DE", "formed": "2022-03-15", "status": "IN_COMPLIANCE"},
+  {"name": "Qux SA", "jurisdiction": "FR", "formed": "2021-07-20", "status": "DELINQUENT"}
+]
