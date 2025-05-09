@@ -1,4 +1,3 @@
-
 ## 🚀 Project Roadmap
 
 | Phase | Target Date | Description | Status |
@@ -19,3 +18,31 @@ Next immediate task is to flesh out plotting logic in `chronos/viz.py` and commi
 
 ---
 # ProjectChronos1
+
+---
+
+## 🌐 Web Interface & 50‑State Search Roadmap
+
+The high‑level path to evolve Chronos from a CLI toolkit into a
+browser‑based dashboard that pulls Secretary‑of‑State data from all 50
+U.S. jurisdictions *plus* SEC EDGAR filings.
+
+| Stage | Milestone | Concrete Deliverable |
+|-------|-----------|----------------------|
+| **A** | REST API surface | `api/` FastAPI app exposing `/entities`, `/status`, `/relationships`, `/sosearch?state=DE&query=acme` |
+| **B** | 50‑State scraper layer | `chronos/scrapers/` – one module per state, all inheriting a common `BaseScraper`; nightly cron populates SQLite |
+| **C** | EDGAR integration | Call SEC’s full‑text search endpoint → store CIK + latest Filing URL in `edgar_filings` table |
+| **D** | React/Tailwind front‑end | `ui/` folder (Vite app) with: <br>• Search bar (unified SoS + EDGAR) <br>• Status snapshot card <br>• Ownership network D3 panel |
+| **E** | Auth & multi‑portfolio | Simple OAuth (GitHub / Google) → each user sees only their saved portfolios |
+| **F** | Docker compose | `docker-compose.yml` spins up API, worker, and UI so graders run `docker compose up` and get the full stack |
+| **G** | One‑click deploy | Render .com or Fly.io blueprint + GitHub Action (`on: push`) that builds & deploys main branch |
+
+> **Current position:** Stages **A** & **B** are next. Core Python
+> data‑models already power the API, so we’ll scaffold FastAPI then add
+> one or two scraper prototypes (e.g. Delaware & California).  
+> Once those endpoints stabilise, we’ll plug the React UI into the API
+> and iterate.
+
+Use this table as the guiding checklist before touching code for the web
+phase. Feel free to modify priorities or swap hosting targets as team
+preferences evolve.
