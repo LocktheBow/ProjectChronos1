@@ -51,4 +51,50 @@ export default tseslint.config({
     ...reactDom.configs.recommended.rules,
   },
 })
+
 ```
+
+---
+
+## Project Chronos Progress (2025‑05‑11)
+
+### ✅ What we’ve shipped so far
+
+| Area | Milestone | Details |
+|------|-----------|---------|
+| **Backend API** | **/sos/{state}** demo scraper | Parses Delaware HTML sample and returns a `CorporateEntity`, then stores it in the in‑memory portfolio. |
+| | **/status** snapshot | Aggregates entity counts by `Status`; used by the dashboard chart. |
+| | **/search** unified lookup | Searches *both* the live portfolio (SQLite when enabled) and state scrapers; powers the React search page. |
+| | CORS enabled | `fastapi.middleware.cors` allows the Vite dev server (`localhost:5173`) to call the API. |
+| **Persistence** | SQLite schema & helpers | `chronos.db` + `portfolio_db.py` with `SQLModel`―entities survive process restarts once we swap the in‑memory store. |
+| **Frontend** | Vite + React + TS scaffold | Project bootstrapped with `npm create vite@latest --template react-ts`. |
+| | Tailwind 4 configured | PostCSS plugin added (`@tailwindcss/postcss`) and `index.css` wired up. |
+| | **Search page** | `SearchForm`, `useApi` hook, and `Search` page fetch `/search` and render a basic results list + detail pane. |
+| | **StatusChart** skeleton | Bar chart component renders; awaits live data from `/status`. |
+| **Dev Tooling** | Hot‑reload loops | `uvicorn --reload` and `npm run dev` scripts documented; proxy free thanks to CORS. |
+
+### 🔜 Next up (per the proposal)
+
+1. **Polish UI/UX**
+   - Style forms & results with Tailwind components.
+   - Bind `StatusChart` to `/status` JSON for live counts.
+   - Add empty‑state & loading spinners.
+
+2. **Entity CRUD**
+   - Wire *Add → Portfolio* button to `POST /entities`.
+   - Inline “lifecycle” transitions → `PATCH /entities/{slug}`.
+
+3. **Ownership graph**
+   - New API route `/graph` to expose parent/child edges.
+   - React canvas (e.g. D3 force graph) on `/dashboard`.
+
+4. **SQLite switch‑over**
+   - Enable `SQLITE_URL` env var, call `create_all()` at startup, and persist scraper inserts.
+
+5. **Finishing touches**
+   - README gif of the dashboard.
+   - Dockerfile for full‑stack dev spin‑up.
+
+_The immediate focus is **Step 1 – front‑end polish** so we have a demo‑ready interface for the live presentation._
+
+---
