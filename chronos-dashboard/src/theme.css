@@ -1,0 +1,103 @@
+:root {
+  /* Color palette */
+  --c-indigo: #6366f1;
+  --c-indigo-light: #818cf8;
+  --c-indigo-dark: #4f46e5;
+  
+  --c-sky: #0ea5e9;
+  --c-sky-light: #38bdf8;
+  --c-sky-dark: #0284c7;
+  
+  --c-emerald: #10b981;
+  --c-emerald-light: #34d399;
+  --c-emerald-dark: #059669;
+  
+  --c-rose: #f43f5e;
+  --c-rose-light: #fb7185;
+  --c-rose-dark: #e11d48;
+  
+  /* Slate shades */
+  --c-slate-50: #f8fafc;
+  --c-slate-100: #f1f5f9;
+  --c-slate-200: #e2e8f0;
+  --c-slate-300: #cbd5e1;
+  --c-slate-400: #94a3b8;
+  --c-slate-500: #64748b;
+  --c-slate-600: #475569;
+  --c-slate-700: #334155;
+  --c-slate-800: #1e293b;
+  --c-slate-900: #0f172a;
+  
+  /* Status colors (from StatusChart.tsx) */
+  --c-status-pending: #fde047;
+  --c-status-active: var(--c-indigo);
+  --c-status-in-compliance: var(--c-emerald);
+  --c-status-delinquent: var(--c-rose);
+  --c-status-dissolved: var(--c-slate-500);
+  
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 300ms ease;
+  
+  /* Font weights */
+  --font-regular: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+}
+
+/* Base styles */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--c-slate-50);
+  color: var(--c-slate-900);
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+}
+
+/* Reset some defaults */
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: var(--c-indigo);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--c-slate-300);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--c-slate-400);
+}

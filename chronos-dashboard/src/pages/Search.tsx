@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import SearchForm, { type SearchParams } from "../components/SearchForm";
+import StatusChart from "../components/StatusChart";
 
 /** Minimal summary returned by /api/search */
 interface BusinessSummary {
@@ -86,7 +87,7 @@ export default function Search() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 py-8">
+    <div className="mx-auto max-w-6xl space-y-8 py-8 pb-20">
       {/* Search bar */}
       <div className="rounded bg-white p-6 shadow">
         <SearchForm onSearch={runSearch} />
@@ -95,15 +96,19 @@ export default function Search() {
       {/* Results + details grid */}
       <div className="grid gap-4 md:grid-cols-2">
         {/* left column – search results */}
-        <div className="rounded bg-white p-4 shadow">
+        <div className="rounded bg-white p-4 shadow max-h-[65vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300">
           <h2 className="mb-3 text-lg font-semibold">Results</h2>
           {loading && results.length === 0 && (
-            <p className="text-sm text-gray-400">Searching…</p>
+            <Fragment>
+              {[...Array(4)].map((_,i)=>(
+                <div key={i} className="h-12 rounded border border-gray-200 bg-gray-100 animate-pulse" />
+              ))}
+            </Fragment>
           )}
           {results.length === 0 && !loading && (
             <p className="text-sm text-gray-400">No results yet</p>
           )}
-          <ul className="space-y-2">
+          <ul className="space-y-2 divide-y divide-gray-100" aria-live="polite">
             {results.map((r) => {
               const statusDisplay =
                 typeof r.status === "number"
@@ -113,10 +118,10 @@ export default function Search() {
               return (
                 <li
                   key={r.slug}
-                  className={`cursor-pointer rounded border p-2 ${
+                  className={`cursor-pointer rounded border p-2 transition-colors duration-150 ${
                     selected?.slug === r.slug
-                      ? "border-indigo-500 bg-indigo-50"
-                      : "border-gray-200 hover:bg-gray-50"
+                      ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-400"
+                      : "border-gray-200 hover:bg-[#F9FAFB]"
                   }`}
                   onClick={() => fetchDetails(r.slug)}
                 >
@@ -131,7 +136,7 @@ export default function Search() {
         </div>
 
         {/* right column – details */}
-        <div className="rounded bg-white p-4 shadow">
+        <div className="rounded bg-white p-4 shadow max-h-[65vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300">
           {selected ? (
             <>
               <h2 className="mb-3 text-lg font-semibold">{selected.name}</h2>
@@ -163,12 +168,27 @@ export default function Search() {
               </dl>
             </>
           ) : (
-            <p className="text-sm text-gray-400">
-              Select an entity to view details
-            </p>
+            loading ? (
+              <div className="flex h-full items-center justify-center py-10">
+                <svg className="h-8 w-8 animate-spin text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400">
+                Select an entity to view details
+              </p>
+            )
           )}
         </div>
       </div>
+
+      {/* portfolio status snapshot */}
+      <section className="rounded bg-white p-4 shadow overflow-x-auto">
+        <h2 className="mb-3 text-lg font-semibold">Portfolio status</h2>
+        <StatusChart />
+      </section>
     </div>
   );
 }

@@ -3,11 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from chronos.portfolio import PortfolioManager
 from chronos.models import CorporateEntity, Status
+from chronos.relationships import RelationshipGraph
 from fastapi import HTTPException
 from fastapi import Query
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from chronos.scrapers.de import DelawareScraper
-from .deps import get_portfolio          # <- make sure this import resolves
+from chronos.scrapers.openc import OpenCorporatesScraper
+from .deps import get_portfolio, get_relationships
 import os, inspect, chronos.scrapers.de
 from pydantic import BaseModel
 if os.getenv("SCRAPER_TRACE"):
@@ -16,17 +18,13 @@ if os.getenv("SCRAPER_TRACE"):
 app = FastAPI(
     title="Project Chronos API",
     version="0.1.0",
-    description="HTTP layer over the PortfolioManager.",
+    description="HTTP layer over the PortfolioManager with unified OpenCorporates integration.",
 )
 
 # --- CORS ----------------------------------------------------------
-# During local development the React/Vite front‑end runs on :5173.
-# We allow that origin (localhost or 127.0.0.1) to call this API.
-# Add more items to *origins* when you deploy (e.g. your production URL).
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
+# Temporary dev-only setting: allow any origin.
+# This should be tightened in production to specific origins.
+origins = ["*"]  # allow any origin during local development
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,6 +33,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- Include Routers ----------------------------------------------------------
+from .sosearch import router as sosearch_router
+app.include_router(sosearch_router)
 
 # ---------- health-check ----------
 @app.get("/")
@@ -102,12 +104,17 @@ def search_entities(
         pattern="^[A-Za-z]{2}$",
         description="Optional two‑letter state code",
     ),
+    use_opencorporates: bool = Query(
+        True,
+        description="Whether to use OpenCorporates API for search (if False, uses only local data)",
+    ),
     pm: PortfolioManager = Depends(get_portfolio),
 ):
     """
     Unified business search.
 
-    * For ``state == "DE"`` we hit the internal Delaware demo scraper.
+    * For ``use_opencorporates=True`` (default), search the OpenCorporates API.
+    * For ``state == "DE"`` and ``use_opencorporates=False``, use the Delaware demo scraper.
     * Otherwise we search the in‑memory PortfolioManager by case‑insensitive
       substring match on name and optional jurisdiction filter.
 
@@ -116,19 +123,28 @@ def search_entities(
     """
     matches: list[CorporateEntity] = []
 
-    # -- state‑specific scraper ------------------------------------------------
-    if state and state.upper() == "DE":
+    # -- OpenCorporates search (default) ---------------------------------------
+    if use_opencorporates:
+        scraper = OpenCorporatesScraper()
+        results = scraper.search(q, jurisdiction=state)
+        if results:
+            for entity in results:
+                pm.add(entity)
+                matches.append(entity)
+
+    # -- state‑specific scraper fallback --------------------------------------
+    elif state and state.upper() == "DE":
         record = DelawareScraper().fetch(q)
         if record:
             pm.add(record)
             matches.append(record)
 
     # -- fallback: search current portfolio -----------------------------------
-    q_lower = q.lower()
-    for ent in pm:
-        print("-- matcher:", q_lower, "vs", ent.name.lower(), flush=True)
-        if q_lower in ent.name.lower() and (not state or ent.jurisdiction.upper() == state.upper()):
-            matches.append(ent)
+    if not matches:
+        q_lower = q.lower()
+        for ent in pm:
+            if q_lower in ent.name.lower() and (not state or ent.jurisdiction.upper() == state.upper()):
+                matches.append(ent)
 
     if not matches:
         raise HTTPException(status_code=404, detail="No matching entities found")
@@ -144,6 +160,54 @@ def search_entities(
         for ent in matches
     ]
     return summaries
+
+# ---------- GET /relationships ----------
+@app.get("/relationships")
+def get_relationships(
+    rg: RelationshipGraph = Depends(get_relationships),
+    pm: PortfolioManager = Depends(get_portfolio),
+):
+    """
+    Return the corporate relationship graph for visualization.
+    
+    Returns a network structure with nodes (entities) and links (ownership relationships).
+    Each node includes entity data like status and jurisdiction.
+    Each link includes the ownership percentage.
+    """
+    # Ensure all entities from portfolio are in the graph with their metadata
+    for entity in pm:
+        rg.add_entity_data(entity)
+        
+    # Add some sample relationships if graph is empty
+    if len(list(rg.g.edges())) == 0:
+        # Find some entities to connect
+        entities = list(pm)
+        if len(entities) >= 3:
+            # Create a simple parent-subsidiary structure
+            parent_slug = entities[0].name.lower().replace(" ", "-")
+            child1_slug = entities[1].name.lower().replace(" ", "-")
+            child2_slug = entities[2].name.lower().replace(" ", "-")
+            
+            rg.link_parent(parent_slug, child1_slug, 100.0)
+            rg.link_parent(parent_slug, child2_slug, 75.0)
+    
+    # Convert to JSON format for the frontend
+    return rg.to_json()
+
+# ---------- GET /shell-detection ----------
+@app.get("/shell-detection")
+def detect_shell_companies(rg: RelationshipGraph = Depends(get_relationships)):
+    """
+    Identify potential shell companies in the corporate network.
+    
+    Uses graph analysis to detect entities that match patterns common to shells:
+    - No subsidiaries but owned by others
+    - Part of a chain of single-child owners
+    - Active status but limited activity
+    
+    Returns a list of entities with their shell risk scores.
+    """
+    return rg.identify_shell_companies()
 
 # ---------- GET /sos/de ----------
 @app.get("/sos/de")

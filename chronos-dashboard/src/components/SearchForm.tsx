@@ -1,16 +1,21 @@
 import React, { useState, FormEvent } from "react";
+import styles from './SearchForm.module.css';
 
 /** Params sent to the backend search endpoint (`/sos/{state}`) */
 export interface SearchParams {
   /** Free-text business name (required) */
   q: string;
-  /** Two-letter state code; empty string === “all states” */
+  /** Two-letter state code; empty string === "all states" */
   state?: string;
 }
 
 interface SearchFormProps {
   /** Called when the user clicks *Search* or presses ⏎ */
   onSearch: (params: SearchParams) => void;
+  /** Optional title for the search form */
+  title?: string;
+  /** Optional description for the search form */
+  description?: string;
 }
 
 /** Minimal list for now – extend when other scrapers are added */
@@ -27,7 +32,11 @@ const STATES = [
  * global header).  Keeps its own local form state and emits the query
  * via `props.onSearch`.
  */
-export const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
+export const SearchForm: React.FC<SearchFormProps> = ({ 
+  onSearch, 
+  title = "Corporate Entity Search",
+  description = "Search for business entities across multiple states and jurisdictions."
+}) => {
   const [q, setQ] = useState("");
   const [state, setState] = useState("");
 
@@ -39,50 +48,57 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onSearch }) => {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex flex-col gap-2 md:flex-row md:items-end"
-    >
-      {/* business name input */}
-      <div className="flex-1">
-        <label className="block text-sm font-medium text-gray-700">
-          Business Name
-        </label>
-        <input
-          type="text"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="ACME LLC"
-          className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-        />
-      </div>
+    <div className={styles.searchForm}>
+      {title && <h2 className={styles.formHeader}>{title}</h2>}
+      {description && <p className={styles.formDescription}>{description}</p>}
+      
+      <form onSubmit={handleSubmit}>
+        <div className={styles.inputGroup}>
+          {/* business name input */}
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>
+              Business Name
+            </label>
+            <input
+              type="text"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="ACME LLC"
+              className={styles.formControl}
+            />
+          </div>
 
-      {/* state dropdown */}
-      <div className="md:w-48">
-        <label className="block text-sm font-medium text-gray-700">
-          State (Optional)
-        </label>
-        <select
-          value={state}
-          onChange={(e) => setState(e.target.value)}
-          className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-        >
-          {STATES.map((s) => (
-            <option key={s.code} value={s.code}>
-              {s.label}
-            </option>
-          ))}
-        </select>
-      </div>
+          {/* state dropdown */}
+          <div className={styles.formGroup}>
+            <label className={styles.formLabel}>
+              State (Optional)
+            </label>
+            <select
+              value={state}
+              onChange={(e) => setState(e.target.value)}
+              className={styles.select}
+            >
+              {STATES.map((s) => (
+                <option key={s.code} value={s.code}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-      {/* submit */}
-      <button
-        type="submit"
-        className="mt-4 rounded-md bg-indigo-600 px-4 py-2 font-semibold text-white shadow-sm hover:bg-indigo-700 md:mt-0"
-      >
-        Search
-      </button>
-    </form>
+        {/* submit */}
+        <div className={styles.formActions}>
+          <button type="submit" className={styles.btnPrimary}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            Search
+          </button>
+        </div>
+      </form>
+    </div>
   );
 };
 

@@ -1,0 +1,97 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  margin: 0 0 var(--space-lg);
+}
+
+.pageTitle {
+  font-size: 1.875rem;
+  font-weight: var(--font-semibold);
+  color: var(--c-slate-900);
+  margin: 0 0 var(--space-sm);
+}
+
+.pageDescription {
+  color: var(--c-slate-600);
+  max-width: 40rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+}
+
+@media (min-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+.gridItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.card {
+  background-color: white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  flex: 1;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+  font-weight: var(--font-semibold);
+  color: var(--c-slate-900);
+  margin: 0;
+}
+
+.cardActions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.tabList {
+  display: flex;
+  gap: var(--space-sm);
+  border-bottom: 1px solid var(--c-slate-200);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-xs);
+}
+
+.tab {
+  padding: var(--space-sm) var(--space-md);
+  font-weight: var(--font-medium);
+  color: var(--c-slate-600);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--c-slate-900);
+}
+
+.tabActive {
+  color: var(--c-indigo);
+  border-bottom: 2px solid var(--c-indigo);
+}

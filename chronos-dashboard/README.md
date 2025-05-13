@@ -56,6 +56,38 @@ export default tseslint.config({
 
 ---
 
+## 🌐 Corporate Relationship Visualization
+
+The relationship visualization tool provides an Obsidian-like graph view showing connections between corporate entities:
+
+- **Interactive Network Graph**: Force-directed visualization showing parent-subsidiary relationships
+- **Shell Company Detection**: Advanced algorithms identify potential shell companies based on ownership patterns
+- **Entity Detail Panel**: Click any node to view comprehensive information about the entity
+- **Status-Based Coloring**: Node colors indicate lifecycle status (active, pending, delinquent, etc.)
+- **Filtering Controls**: Filter the graph by entity status or relationship type
+
+## 📊 Project Progress Update (2025-05-13)
+
+### ✅ Recently Completed
+- **Relationship Visualization** - Implemented Obsidian-like graph view with force-directed layout
+- **Shell Company Detection** - Added algorithms to identify potential shell companies
+- **Enhanced UI** - Created tabbed interface with dedicated pages for different views
+- **API Endpoints** - Added `/relationships` and `/shell-detection` endpoints
+
+### 🚀 New Features
+- Interactive graph visualization with entity relationship mapping
+- Status-based node coloring for quick visual assessment
+- Detail panel for entity information when clicking nodes
+- Risk analysis for identifying shell structures
+- Filtering and control options for graph exploration
+
+### 🔜 Coming Next
+- Connect filter controls to the graph visualization
+- Add ability to create relationships manually 
+- Enhance persistence of relationship data
+
+---
+
 ## Project Chronos Progress (2025‑05‑11)
 
 ### ✅ What we’ve shipped so far

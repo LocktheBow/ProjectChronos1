@@ -1,0 +1,114 @@
+.chartContainer {
+  background-color: white;
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-lg);
+}
+
+.chartHeader {
+  margin-top: 0;
+  margin-bottom: var(--space-md);
+  font-weight: var(--font-semibold);
+  color: var(--c-slate-900);
+  font-size: 1.25rem;
+}
+
+.chartDescription {
+  color: var(--c-slate-600);
+  margin-bottom: var(--space-lg);
+}
+
+.barChart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.barGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.barHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.barLabel {
+  font-weight: var(--font-medium);
+  color: var(--c-slate-700);
+}
+
+.barCount {
+  font-weight: var(--font-bold);
+  color: var(--c-slate-800);
+}
+
+.barWrapper {
+  height: 16px;
+  width: 100%;
+  background-color: var(--c-slate-100);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bar {
+  height: 100%;
+  border-radius: 999px;
+  transition: width var(--transition-normal) ease-out;
+}
+
+.pending {
+  background-color: var(--c-status-pending);
+}
+
+.active {
+  background-color: var(--c-status-active);
+}
+
+.inCompliance {
+  background-color: var(--c-status-in-compliance);
+}
+
+.delinquent {
+  background-color: var(--c-status-delinquent);
+}
+
+.dissolved {
+  background-color: var(--c-status-dissolved);
+}
+
+.loading {
+  opacity: 0.6;
+}
+
+.error {
+  color: var(--c-rose);
+  font-weight: var(--font-medium);
+  text-align: center;
+  padding: var(--space-lg);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 0.875rem;
+  color: var(--c-slate-700);
+}
+
+.legendColor {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}

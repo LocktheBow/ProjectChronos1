@@ -1,0 +1,107 @@
+.searchForm {
+  background-color: white;
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-lg);
+}
+
+.formHeader {
+  margin-top: 0;
+  margin-bottom: var(--space-md);
+  font-weight: var(--font-semibold);
+  color: var(--c-slate-900);
+  font-size: 1.25rem;
+}
+
+.formDescription {
+  color: var(--c-slate-600);
+  margin-bottom: var(--space-lg);
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.formLabel {
+  font-weight: var(--font-medium);
+  color: var(--c-slate-700);
+}
+
+.inputGroup {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.formControl {
+  flex: 1;
+  padding: var(--space-md);
+  border: 1px solid var(--c-slate-300);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.formControl:focus {
+  outline: none;
+  border-color: var(--c-indigo);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.select {
+  padding: var(--space-md);
+  border: 1px solid var(--c-slate-300);
+  border-radius: var(--radius-sm);
+  background-color: white;
+  font-size: 1rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--c-indigo);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.formActions {
+  display: flex;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.btnPrimary {
+  background-color: var(--c-indigo);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-md) var(--space-lg);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: background-color var(--transition-normal);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.btnPrimary:hover {
+  background-color: var(--c-indigo-dark);
+}
+
+.btnSecondary {
+  background-color: white;
+  color: var(--c-slate-700);
+  border: 1px solid var(--c-slate-300);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md) var(--space-lg);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: background-color var(--transition-normal), border-color var(--transition-normal);
+}
+
+.btnSecondary:hover {
+  background-color: var(--c-slate-50);
+  border-color: var(--c-slate-400);
+}

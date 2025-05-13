@@ -1,0 +1,96 @@
+.tableContainer {
+  background-color: white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tableHeader {
+  background-color: var(--c-slate-50);
+  border-bottom: 1px solid var(--c-slate-200);
+}
+
+.tableHeaderCell {
+  padding: var(--space-md);
+  text-align: left;
+  font-weight: var(--font-medium);
+  color: var(--c-slate-700);
+  font-size: 0.875rem;
+}
+
+.tableRow {
+  border-bottom: 1px solid var(--c-slate-200);
+  transition: background-color var(--transition-fast);
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableRow:hover {
+  background-color: var(--c-slate-50);
+}
+
+.tableCell {
+  padding: var(--space-md);
+  color: var(--c-slate-800);
+}
+
+.entityName {
+  font-weight: var(--font-medium);
+  color: var(--c-slate-900);
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: var(--font-medium);
+}
+
+.statusPending {
+  background-color: var(--c-status-pending);
+  color: var(--c-slate-900);
+}
+
+.statusActive {
+  background-color: var(--c-status-active);
+  color: white;
+}
+
+.statusInCompliance {
+  background-color: var(--c-status-in-compliance);
+  color: white;
+}
+
+.statusDelinquent {
+  background-color: var(--c-status-delinquent);
+  color: white;
+}
+
+.statusDissolved {
+  background-color: var(--c-status-dissolved);
+  color: white;
+}
+
+.actionBtn {
+  padding: var(--space-xs) var(--space-sm);
+  background-color: var(--c-indigo-50);
+  color: var(--c-indigo);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.actionBtn:hover {
+  background-color: var(--c-indigo);
+  color: white;
+}
