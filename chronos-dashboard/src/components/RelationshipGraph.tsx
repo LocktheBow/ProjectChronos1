@@ -192,7 +192,7 @@ export default function RelationshipGraph({
               ctx.font = `${fontSize}px Sans-Serif`;
               
               // Node size based on importance
-              const size = node.type === 'PRIMARY' ? 10 : 7;
+              const size = node.type === 'PRIMARY' ? 8 : 6;
               
               // Draw node circle
               ctx.beginPath();
@@ -214,24 +214,14 @@ export default function RelationshipGraph({
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 
-                // Create solid background for text to ensure visibility in any mode
+                // Create semi-transparent background for text to ensure visibility in any mode
                 const textWidth = ctx.measureText(label).width;
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
                 ctx.fillRect(
-                  (node.x || 0) - textWidth/2 - 4,
-                  (node.y || 0) + 12 - fontSize/2 - 1,
-                  textWidth + 8,
-                  fontSize + 4
-                );
-                
-                // Add a border around the label background
-                ctx.strokeStyle = 'rgba(220, 220, 220, 0.8)';
-                ctx.lineWidth = 1 / globalScale;
-                ctx.strokeRect(
-                  (node.x || 0) - textWidth/2 - 4,
-                  (node.y || 0) + 12 - fontSize/2 - 1,
-                  textWidth + 8,
-                  fontSize + 4
+                  (node.x || 0) - textWidth/2 - 2,
+                  (node.y || 0) + 12 - fontSize/2,
+                  textWidth + 4,
+                  fontSize + 2
                 );
                 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
@@ -241,24 +231,14 @@ export default function RelationshipGraph({
                 const statusLabel = node.status.split('_').join(' ');
                 ctx.font = `${fontSize * 0.8}px Sans-Serif`;
                 
-                // Create solid background for status text
+                // Create semi-transparent background for status text
                 const statusWidth = ctx.measureText(statusLabel).width;
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
                 ctx.fillRect(
-                  (node.x || 0) - statusWidth/2 - 4,
-                  (node.y || 0) + 26 - (fontSize * 0.8)/2 - 1,
-                  statusWidth + 8,
-                  (fontSize * 0.8) + 4
-                );
-                
-                // Add a border around the status background
-                ctx.strokeStyle = 'rgba(220, 220, 220, 0.8)';
-                ctx.lineWidth = 1 / globalScale;
-                ctx.strokeRect(
-                  (node.x || 0) - statusWidth/2 - 4,
-                  (node.y || 0) + 26 - (fontSize * 0.8)/2 - 1,
-                  statusWidth + 8,
-                  (fontSize * 0.8) + 4
+                  (node.x || 0) - statusWidth/2 - 2,
+                  (node.y || 0) + 24 - (fontSize * 0.8)/2,
+                  statusWidth + 4,
+                  (fontSize * 0.8) + 2
                 );
                 
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
