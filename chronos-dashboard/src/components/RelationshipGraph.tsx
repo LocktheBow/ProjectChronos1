@@ -179,10 +179,11 @@ export default function RelationshipGraph({
             onNodeClick={handleNodeClick}
             cooldownTicks={100}
             linkWidth={link => 2}
-            d3AlphaDecay={0.02}
-            d3VelocityDecay={0.3}
+            d3AlphaDecay={0.01}
+            d3VelocityDecay={0.1}
             dagMode={null}
             dagLevelDistance={50}
+            linkDistance={link => 150}
             backgroundColor="#ffffff"
             nodeCanvasObject={(node: any, ctx, globalScale) => {
               // Node visualization
