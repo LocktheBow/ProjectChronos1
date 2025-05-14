@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import RelationshipGraph from '../components/RelationshipGraph';
 import ShellDetection from '../components/ShellDetection';
+import EdgarRelationshipsButton from '../components/EdgarRelationshipsButton';
 
 const POLL_INTERVAL = 15000; // 15 seconds
 
@@ -64,6 +65,12 @@ export default function Relationships() {
                 >
                   Full Screen
                 </button>
+                <EdgarRelationshipsButton onRefresh={() => {
+                  // Re-fetch relationship data
+                  if (graphRef.current?.resetZoom) {
+                    graphRef.current.resetZoom();
+                  }
+                }} />
               </div>
             </div>
             <p className="text-sm text-gray-600 mb-4">

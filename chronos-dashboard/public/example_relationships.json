@@ -1,0 +1,236 @@
+{
+  "nodes": [
+    {
+      "id": "alphabet-inc",
+      "name": "Alphabet Inc",
+      "status": "ACTIVE",
+      "jurisdiction": "DE",
+      "type": "PRIMARY"
+    },
+    {
+      "id": "google-llc",
+      "name": "Google LLC",
+      "status": "ACTIVE",
+      "jurisdiction": "DE",
+      "type": "SUBSIDIARY"
+    },
+    {
+      "id": "youtube-llc",
+      "name": "YouTube LLC",
+      "status": "ACTIVE",
+      "jurisdiction": "DE",
+      "type": "SUBSIDIARY"
+    },
+    {
+      "id": "waymo-llc",
+      "name": "Waymo LLC",
+      "status": "ACTIVE",
+      "jurisdiction": "DE",
+      "type": "SUBSIDIARY"
+    },
+    {
+      "id": "deepmind-technologies",
+      "name": "DeepMind Technologies",
+      "status": "ACTIVE",
+      "jurisdiction": "UK",
+      "type": "SUBSIDIARY"
+    },
+    {
+      "id": "verily-life-sciences",
+      "name": "Verily Life Sciences",
+      "status": "ACTIVE",
+      "jurisdiction": "DE",
+      "type": "SUBSIDIARY"
+    },
+    {
+      "id": "nest-labs",
+      "name": "Nest Labs",
+      "status": "ACTIVE",
+      "jurisdiction": "CA",
+      "type": "SUBSIDIARY"
+    },
+    {
+      "id": "walt-disney-company",
+      "name": "The Walt Disney Company",
+      "status": "ACTIVE",
+      "jurisdiction": "DE",
+      "type": "PRIMARY"
+    },
+    {
+      "id": "pixar-animation",
+      "name": "Pixar Animation Studios",
+      "status": "ACTIVE",
+      "jurisdiction": "CA",
+      "type": "SUBSIDIARY"
+    },
+    {
+      "id": "marvel-entertainment",
+      "name": "Marvel Entertainment",
+      "status": "ACTIVE",
+      "jurisdiction": "DE",
+      "type": "SUBSIDIARY"
+    },
+    {
+      "id": "lucasfilm",
+      "name": "Lucasfilm Ltd",
+      "status": "ACTIVE",
+      "jurisdiction": "CA",
+      "type": "SUBSIDIARY"
+    },
+    {
+      "id": "abc-television-group",
+      "name": "ABC Television Group",
+      "status": "ACTIVE",
+      "jurisdiction": "NY",
+      "type": "SUBSIDIARY"
+    },
+    {
+      "id": "espn",
+      "name": "ESPN Inc",
+      "status": "ACTIVE",
+      "jurisdiction": "DE",
+      "type": "SUBSIDIARY"
+    },
+    {
+      "id": "coca-cola-company",
+      "name": "The Coca-Cola Company",
+      "status": "ACTIVE",
+      "jurisdiction": "DE",
+      "type": "PRIMARY"
+    },
+    {
+      "id": "coca-cola-consolidated",
+      "name": "Coca-Cola Consolidated",
+      "status": "ACTIVE",
+      "jurisdiction": "DE",
+      "type": "SUBSIDIARY"
+    },
+    {
+      "id": "coca-cola-united",
+      "name": "Coca-Cola UNITED",
+      "status": "ACTIVE",
+      "jurisdiction": "AL",
+      "type": "SUBSIDIARY"
+    },
+    {
+      "id": "coca-cola-bottlers-africa",
+      "name": "Coca-Cola Bottlers Africa",
+      "status": "ACTIVE",
+      "jurisdiction": "ZA",
+      "type": "SUBSIDIARY"
+    },
+    {
+      "id": "zico-beverages",
+      "name": "ZICO Beverages",
+      "status": "ACTIVE",
+      "jurisdiction": "CA",
+      "type": "SUBSIDIARY"
+    },
+    {
+      "id": "honest-tea",
+      "name": "Honest Tea",
+      "status": "ACTIVE",
+      "jurisdiction": "MD",
+      "type": "SUBSIDIARY"
+    },
+    {
+      "id": "monster-beverage",
+      "name": "Monster Beverage Corp",
+      "status": "ACTIVE",
+      "jurisdiction": "DE",
+      "type": "SUBSIDIARY"
+    }
+  ],
+  "links": [
+    {
+      "source": "alphabet-inc",
+      "target": "google-llc",
+      "value": 100
+    },
+    {
+      "source": "alphabet-inc",
+      "target": "youtube-llc",
+      "value": 100
+    },
+    {
+      "source": "alphabet-inc",
+      "target": "waymo-llc",
+      "value": 100
+    },
+    {
+      "source": "alphabet-inc",
+      "target": "deepmind-technologies",
+      "value": 100
+    },
+    {
+      "source": "alphabet-inc",
+      "target": "verily-life-sciences",
+      "value": 100
+    },
+    {
+      "source": "alphabet-inc",
+      "target": "nest-labs",
+      "value": 100
+    },
+    {
+      "source": "google-llc",
+      "target": "youtube-llc",
+      "value": 100
+    },
+    {
+      "source": "walt-disney-company",
+      "target": "pixar-animation",
+      "value": 100
+    },
+    {
+      "source": "walt-disney-company",
+      "target": "marvel-entertainment",
+      "value": 100
+    },
+    {
+      "source": "walt-disney-company",
+      "target": "lucasfilm",
+      "value": 100
+    },
+    {
+      "source": "walt-disney-company",
+      "target": "abc-television-group",
+      "value": 100
+    },
+    {
+      "source": "walt-disney-company",
+      "target": "espn",
+      "value": 80
+    },
+    {
+      "source": "coca-cola-company",
+      "target": "coca-cola-consolidated",
+      "value": 35
+    },
+    {
+      "source": "coca-cola-company",
+      "target": "coca-cola-united",
+      "value": 30
+    },
+    {
+      "source": "coca-cola-company",
+      "target": "coca-cola-bottlers-africa",
+      "value": 68.3
+    },
+    {
+      "source": "coca-cola-company",
+      "target": "zico-beverages",
+      "value": 100
+    },
+    {
+      "source": "coca-cola-company",
+      "target": "honest-tea",
+      "value": 100
+    },
+    {
+      "source": "coca-cola-company",
+      "target": "monster-beverage",
+      "value": 19.36
+    }
+  ]
+}

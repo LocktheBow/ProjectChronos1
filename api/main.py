@@ -235,6 +235,33 @@ def get_relationships(
             
             rg.link_parent(parent_slug, child1_slug, 100.0)
             rg.link_parent(parent_slug, child2_slug, 75.0)
+            
+            # Load sample relationships data for demo
+            import json
+            import os
+            sample_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
+                "chronos-dashboard", "public", "example_relationships.json")
+            try:
+                if os.path.exists(sample_path):
+                    with open(sample_path, 'r') as f:
+                        example_data = json.load(f)
+                        
+                    # Add nodes and relationships from example data
+                    for node in example_data.get('nodes', []):
+                        entity = CorporateEntity(
+                            name=node['name'],
+                            jurisdiction=node['jurisdiction'],
+                            status=getattr(Status, node['status']),
+                            formed=None
+                        )
+                        pm.add(entity)
+                        rg.add_entity_data(entity)
+                    
+                    # Add edges
+                    for link in example_data.get('links', []):
+                        rg.link_parent(link['source'], link['target'], link['value'])
+            except Exception as e:
+                print(f"Failed to load example relationships: {e}")
     
     # Convert to JSON format for the frontend
     return rg.to_json()
