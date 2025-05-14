@@ -11,8 +11,10 @@ export default function EdgarRelationshipsButton({ onRefresh }: EdgarRelationshi
   const handleLoadExampleRelationships = async () => {
     try {
       setLoading(true);
-      // This will trigger the loading of example relationships
+      console.log("Loading example relationships...");
+      // This will trigger the loading of example relationships on the backend
       await fetchRelationships(undefined, true);
+      console.log("Example relationships loaded, refreshing graph...");
       // Tell the parent component to refresh the data
       onRefresh();
     } catch (error) {

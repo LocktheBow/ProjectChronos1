@@ -47,6 +47,8 @@ interface RelationshipGraphProps {
   statusFilter?: string;
   /** Ref for accessing the graph instance */
   graphRef?: React.RefObject<any>;
+  /** Key that changes to trigger data refresh */
+  refreshKey?: number;
 }
 
 export default function RelationshipGraph({
@@ -56,7 +58,8 @@ export default function RelationshipGraph({
   showLabels = true,
   showArrows = true,
   statusFilter = '',
-  graphRef: externalGraphRef
+  graphRef: externalGraphRef,
+  refreshKey = 0
 }: RelationshipGraphProps) {
   const [rawGraphData, setRawGraphData] = useState<RelationshipGraphData | null>(null);
   const [filteredGraphData, setFilteredGraphData] = useState<RelationshipGraphData | null>(null);
@@ -101,7 +104,7 @@ export default function RelationshipGraph({
       controller.abort();
       if (intervalId) clearInterval(intervalId);
     };
-  }, [pollInterval]);
+  }, [pollInterval, refreshKey]);
 
   // Apply filters when raw data or status filter changes
   useEffect(() => {

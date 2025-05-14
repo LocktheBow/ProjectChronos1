@@ -10,6 +10,7 @@ export default function Relationships() {
   const [showLabels, setShowLabels] = useState(true);
   const [showArrows, setShowArrows] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
   const graphRef = useRef<any>(null);
   
   // Reset zoom to default view
@@ -34,6 +35,15 @@ export default function Relationships() {
       document.exitFullscreen();
       // Remove fullscreen class when exiting
       container.classList.remove('fullscreen-mode');
+    }
+  };
+  
+  // Trigger data refresh in RelationshipGraph
+  const handleDataRefresh = () => {
+    setRefreshKey(prevKey => prevKey + 1);
+    // Also reset zoom to see the full graph
+    if (graphRef.current?.resetZoom) {
+      graphRef.current.resetZoom();
     }
   };
 
@@ -65,12 +75,7 @@ export default function Relationships() {
                 >
                   Full Screen
                 </button>
-                <EdgarRelationshipsButton onRefresh={() => {
-                  // Re-fetch relationship data
-                  if (graphRef.current?.resetZoom) {
-                    graphRef.current.resetZoom();
-                  }
-                }} />
+                <EdgarRelationshipsButton onRefresh={handleDataRefresh} />
               </div>
             </div>
             <p className="text-sm text-gray-600 mb-4">
@@ -85,6 +90,7 @@ export default function Relationships() {
                 showArrows={showArrows}
                 statusFilter={statusFilter}
                 graphRef={graphRef}
+                refreshKey={refreshKey}
               />
             </div>
             <div className="mt-4 text-xs text-gray-500 flex flex-wrap gap-4">
