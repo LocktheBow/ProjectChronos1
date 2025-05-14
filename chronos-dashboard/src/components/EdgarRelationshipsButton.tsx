@@ -12,7 +12,7 @@ export default function EdgarRelationshipsButton({ onRefresh }: EdgarRelationshi
     try {
       setLoading(true);
       // This will trigger the loading of example relationships
-      await fetchRelationships();
+      await fetchRelationships(undefined, true);
       // Tell the parent component to refresh the data
       onRefresh();
     } catch (error) {

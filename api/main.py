@@ -211,6 +211,7 @@ async def search_entities(
 def get_relationships(
     rg: RelationshipGraph = Depends(get_relationships),
     pm: PortfolioManager = Depends(get_portfolio),
+    load_examples: bool = Query(False, description="Force loading example relationships"),
 ):
     """
     Return the corporate relationship graph for visualization.
@@ -223,11 +224,15 @@ def get_relationships(
     for entity in pm:
         rg.add_entity_data(entity)
         
-    # Add some sample relationships if graph is empty
-    if len(list(rg.g.edges())) == 0:
-        # Find some entities to connect
-        entities = list(pm)
-        if len(entities) >= 3:
+    # Add some sample relationships if graph is empty or explicitly requested
+    if load_examples or len(list(rg.g.edges())) == 0:
+        if load_examples:
+            # Clear existing relationships when explicitly loading examples
+            rg.g.clear()
+        
+        # Find some entities to connect if not explicitly loading examples
+        if not load_examples and len(list(pm)) >= 3:
+            entities = list(pm)
             # Create a simple parent-subsidiary structure
             parent_slug = entities[0].name.lower().replace(" ", "-")
             child1_slug = entities[1].name.lower().replace(" ", "-")
@@ -235,33 +240,35 @@ def get_relationships(
             
             rg.link_parent(parent_slug, child1_slug, 100.0)
             rg.link_parent(parent_slug, child2_slug, 75.0)
-            
-            # Load sample relationships data for demo
-            import json
-            import os
-            sample_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
-                "chronos-dashboard", "public", "example_relationships.json")
-            try:
-                if os.path.exists(sample_path):
-                    with open(sample_path, 'r') as f:
-                        example_data = json.load(f)
-                        
-                    # Add nodes and relationships from example data
-                    for node in example_data.get('nodes', []):
-                        entity = CorporateEntity(
-                            name=node['name'],
-                            jurisdiction=node['jurisdiction'],
-                            status=getattr(Status, node['status']),
-                            formed=None
-                        )
-                        pm.add(entity)
-                        rg.add_entity_data(entity)
+        
+        # Load sample relationships data for demo
+        import json
+        import os
+        sample_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
+            "chronos-dashboard", "public", "example_relationships.json")
+        try:
+            if os.path.exists(sample_path):
+                with open(sample_path, 'r') as f:
+                    example_data = json.load(f)
                     
-                    # Add edges
-                    for link in example_data.get('links', []):
-                        rg.link_parent(link['source'], link['target'], link['value'])
-            except Exception as e:
-                print(f"Failed to load example relationships: {e}")
+                # Add nodes and relationships from example data
+                for node in example_data.get('nodes', []):
+                    entity = CorporateEntity(
+                        name=node['name'],
+                        jurisdiction=node['jurisdiction'],
+                        status=getattr(Status, node['status']),
+                        formed=None
+                    )
+                    pm.add(entity)
+                    rg.add_entity_data(entity)
+                
+                # Add edges
+                for link in example_data.get('links', []):
+                    rg.link_parent(link['source'], link['target'], link['value'])
+                    
+                print(f"Loaded example relationships: {len(example_data.get('nodes', []))} nodes, {len(example_data.get('links', []))} links")
+        except Exception as e:
+            print(f"Failed to load example relationships: {e}")
     
     # Convert to JSON format for the frontend
     return rg.to_json()

@@ -89,11 +89,17 @@ interface RelationshipGraph {
 
 /**
  * Fetch the relationship graph from the /relationships endpoint
+ * @param signal Optional AbortSignal for cancellation
+ * @param loadExamples Optional flag to force loading example relationships
  */
 export async function fetchRelationships(
   signal?: AbortSignal,
+  loadExamples?: boolean,
 ): Promise<RelationshipGraph> {
-  return api<RelationshipGraph>("/relationships", { signal });
+  const url = loadExamples 
+    ? "/relationships?load_examples=true" 
+    : "/relationships";
+  return api<RelationshipGraph>(url, { signal });
 }
 
 /**
