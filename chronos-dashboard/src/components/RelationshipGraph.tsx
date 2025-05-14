@@ -171,7 +171,7 @@ export default function RelationshipGraph({
             nodeRelSize={8}
             nodeLabel={(node: any) => `${node.name} (${node.jurisdiction})\nStatus: ${node.status}`}
             nodeColor={(node: any) => STATUS_COLORS[node.status] || STATUS_COLORS.UNKNOWN}
-            linkDirectionalArrowLength={showArrows ? 8 : 0}
+            linkDirectionalArrowLength={showArrows ? 5 : 0}
             linkDirectionalArrowRelPos={1}
             linkDirectionalParticles={showArrows ? 2 : 0}
             linkDirectionalParticleSpeed={0.005}
@@ -199,13 +199,13 @@ export default function RelationshipGraph({
               ctx.fillStyle = STATUS_COLORS[node.status] || STATUS_COLORS.UNKNOWN;
               ctx.fill();
               
-              // Add border for selected node
+              // Highlight selected node with slightly larger size instead of border
               if (selectedNode && node.id === selectedNode.id) {
+                // Just make the node slightly larger when selected
                 ctx.beginPath();
-                ctx.arc(node.x || 0, node.y || 0, size + 3, 0, 2 * Math.PI);
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 2 / globalScale;
-                ctx.stroke();
+                ctx.arc(node.x || 0, node.y || 0, size * 1.2, 0, 2 * Math.PI);
+                ctx.fillStyle = STATUS_COLORS[node.status] || STATUS_COLORS.UNKNOWN;
+                ctx.fill();
               }
               
               // Draw text below the node if showLabels is true
