@@ -22,8 +22,8 @@ from sqlmodel import SQLModel, create_engine, Session
 # ---------------------------------------------------------------------------
 # Engine (SQLite file lives in project root)
 # ---------------------------------------------------------------------------
-_DB_FILE = Path(__file__).resolve().parents[2] / "chronos.db"
-engine = create_engine(f"sqlite:///{_DB_FILE}", echo=False)
+from chronos.settings import DB_URL, DB_ECHO
+engine = create_engine(DB_URL, echo=DB_ECHO)
 
 
 # ---------------------------------------------------------------------------

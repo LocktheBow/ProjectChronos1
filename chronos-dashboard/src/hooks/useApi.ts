@@ -129,14 +129,163 @@ interface EntityHit {
  * @param q     Full‑text business name query (required)
  * @param state Optional 2‑letter state filter
  */
+interface CachedSearch {
+  timestamp: number;
+  query: string;
+  state?: string;
+  results: EntityHit[];
+}
+
+// Helper function to get cached search results
+function getSearchCache(): Record<string, CachedSearch> {
+  try {
+    const cached = localStorage.getItem('chronos_search_cache');
+    return cached ? JSON.parse(cached) : {};
+  } catch (e) {
+    console.error('Error reading search cache:', e);
+    return {};
+  }
+}
+
+// Helper function to save search results to cache
+function saveSearchToCache(query: string, state: string | undefined, results: EntityHit[]): void {
+  try {
+    const cache = getSearchCache();
+    const cacheKey = `${query}|${state || ''}`;
+    
+    // Update cache with new results
+    cache[cacheKey] = {
+      timestamp: Date.now(),
+      query,
+      state,
+      results
+    };
+    
+    // Prune old entries (keep last 20)
+    const entries = Object.entries(cache);
+    if (entries.length > 20) {
+      const sortedEntries = entries.sort((a, b) => b[1].timestamp - a[1].timestamp);
+      const pruned = Object.fromEntries(sortedEntries.slice(0, 20));
+      localStorage.setItem('chronos_search_cache', JSON.stringify(pruned));
+    } else {
+      localStorage.setItem('chronos_search_cache', JSON.stringify(cache));
+    }
+  } catch (e) {
+    console.error('Error saving to search cache:', e);
+  }
+}
+
 export function searchEntities(
+  q: string,
+  state?: string,
+  signal?: AbortSignal,
+  useDataAxle: boolean = true
+): Promise<EntityHit[]> {
+  const params = new URLSearchParams({ q });
+  if (state) params.append("state", state);
+  if (useDataAxle !== undefined) params.append("use_data_axle", String(useDataAxle));
+  
+  return api<EntityHit[]>(`/search?${params.toString()}`, { signal })
+    .then(results => {
+      // Cache successful results
+      saveSearchToCache(q, state, results);
+      return results;
+    });
+}
+
+export function searchSos(
+  q: string,
+  jurisdiction?: string,
+  signal?: AbortSignal,
+): Promise<EntityHit[]> {
+  const params = new URLSearchParams({ q });
+  if (jurisdiction) params.append("jurisdiction", jurisdiction);
+  
+  return api<EntityHit[]>(`/sosearch?${params.toString()}`, { signal })
+    .then(results => {
+      // Cache successful results
+      saveSearchToCache(q, jurisdiction, results);
+      return results;
+    });
+}
+
+/**
+ * Search using Data Axle API
+ */
+export function searchAxle(
   q: string,
   state?: string,
   signal?: AbortSignal,
 ): Promise<EntityHit[]> {
   const params = new URLSearchParams({ q });
   if (state) params.append("state", state);
-  return api<EntityHit[]>(`/search?${params.toString()}`, { signal });
+  
+  return api<EntityHit[]>(`/axle/search?${params.toString()}`, { signal })
+    .then(results => {
+      // Cache successful results
+      saveSearchToCache(q, state, results);
+      return results;
+    });
+}
+
+/**
+ * Search using SEC EDGAR API
+ */
+export function searchEdgar(
+  q: string,
+  limit: number = 10,
+  signal?: AbortSignal,
+): Promise<any[]> {
+  const params = new URLSearchParams({ q });
+  if (limit) params.append("limit", String(limit));
+  
+  return api<any[]>(`/edgar/search?${params.toString()}`, { signal });
+}
+
+/**
+ * Get SEC filings for a company by CIK
+ */
+export function getEdgarFilings(
+  cik: string,
+  forms?: string[],
+  limit: number = 10,
+  signal?: AbortSignal,
+): Promise<any[]> {
+  const params = new URLSearchParams();
+  if (forms && forms.length > 0) params.append("forms", forms.join(','));
+  if (limit) params.append("limit", String(limit));
+  
+  return api<any[]>(`/edgar/filings/${cik}?${params.toString()}`, { signal });
+}
+
+/**
+ * Get cached search results, if any exist
+ * @param q The search query
+ * @param state Optional state/jurisdiction filter
+ * @returns Cached results or null if not found
+ */
+export function getCachedSearchResults(q: string, state?: string): EntityHit[] | null {
+  try {
+    const cache = getSearchCache();
+    const cacheKey = `${q}|${state || ''}`;
+    const cached = cache[cacheKey];
+    
+    if (cached) {
+      // Check if cache is still valid (24 hours)
+      const now = Date.now();
+      const cacheAge = now - cached.timestamp;
+      const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+      
+      if (cacheAge < CACHE_TTL) {
+        return cached.results;
+      }
+    }
+    
+    return null;
+  } catch (e) {
+    console.error('Error retrieving cached search results:', e);
+    return null;
+  }
 }
 
 /* -------------------------------------------------------------------------- */

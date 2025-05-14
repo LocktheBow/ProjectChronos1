@@ -136,4 +136,3 @@ async def get_entity_by_id(
     
     # Return normalized entity data
     return normalize_entity_to_summary(entity)
-"""

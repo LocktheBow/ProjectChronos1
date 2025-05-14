@@ -9,10 +9,12 @@ find their CIK numbers, and retrieve information about their latest filings.
 
 The EDGAR integration is optional and can be enabled/disabled via configuration.
 
+This version uses the new SEC EDGAR Search API v2 endpoints and async HTTP clients.
+
 Usage:
 ------
-edgar = EdgarClient()
-filing_info = edgar.enrich_entity(entity)  # Adds SEC info to entity.notes
+edgar = EdgarClient(client)  # client is an httpx.AsyncClient
+filing_info = await edgar.enrich_entity(entity)  # Adds SEC info to entity.notes
 """
 
 from __future__ import annotations
@@ -22,57 +24,55 @@ import re
 import json
 import logging
 import sqlite3
-import requests
+import time
+import asyncio
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple, Any, cast
+
+from httpx import AsyncClient, Response
 
 from chronos.models import CorporateEntity
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
-# API Constants
-EDGAR_SEARCH_URL = "https://www.sec.gov/cgi-bin/browse-edgar"
-EDGAR_COMPANY_URL = "https://www.sec.gov/edgar/searchedgar/companysearch"
-EDGAR_USER_AGENT = os.environ.get(
-    "EDGAR_USER_AGENT", 
-    "Chronos Corporate Entity Tracker (Educational Project)"
-)
+# Cache setup
+CACHE_DB_PATH = Path(os.environ.get("CHRONOS_CACHE_DIR", ".")) / "chronos_cache.db"
 CACHE_DURATION = timedelta(hours=24)
 
 # Common SEC form types of interest
 FORM_TYPES = ['10-K', '10-Q', '8-K', 'S-1', 'S-3', 'S-4', '13F']
 
-# Cache setup
-CACHE_DB_PATH = Path(os.environ.get("CHRONOS_CACHE_DIR", ".")) / "chronos_cache.db"
-
 
 class EdgarClient:
     """
-    Client for interacting with the SEC EDGAR database.
+    Client for interacting with the SEC EDGAR Search API v2.
     
     Provides functionality to search for companies, retrieve CIK numbers,
     and get information about recent filings.
     """
     
-    def __init__(self, use_cache: bool = True, enabled: bool = True):
+    def __init__(self, client: AsyncClient, use_cache: bool = True, enabled: bool = True):
         """
         Initialize the EDGAR client.
         
         Args:
+            client: AsyncClient configured with SEC EDGAR API headers
             use_cache: Whether to cache API responses (defaults to True)
             enabled: Whether the EDGAR integration is enabled
         """
+        self.client = client
         self.use_cache = use_cache
         self.enabled = enabled
-        self._setup_cache_if_needed()
+        self._cik_cache: Dict[str, str] = {}  # In-memory CIK lookup cache
+        
+        # Setup database cache if needed
+        if self.use_cache:
+            self._setup_cache_if_needed()
         
     def _setup_cache_if_needed(self) -> None:
         """Create the cache database and tables if they don't exist."""
-        if not self.use_cache:
-            return
-            
         if not CACHE_DB_PATH.parent.exists():
             CACHE_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
             
@@ -155,185 +155,160 @@ class EdgarClient:
         conn.commit()
         conn.close()
         
-    def _make_api_request(self, url: str, params: Dict) -> Dict:
+    async def search_companies(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
         """
-        Make a request to the SEC EDGAR API.
+        Search for companies by name using the SEC EDGAR Search API.
         
         Args:
-            url: API endpoint URL
-            params: Query parameters
+            query: Company name or keyword to search for
+            limit: Maximum number of results to return
             
         Returns:
-            Response data as a dictionary
-            
-        Raises:
-            ValueError: For API errors or invalid responses
+            List of company information dictionaries
         """
-        headers = {
-            "User-Agent": EDGAR_USER_AGENT,
-            "Accept": "application/json",
+        if not self.enabled:
+            logger.info("EDGAR integration is disabled")
+            return []
+            
+        # Check cache first
+        cache_key = f"edgar_search_{query}_{limit}"
+        cached = self._get_cached_response(cache_key)
+        
+        if cached:
+            logger.info(f"Using cached EDGAR search results for '{query}'")
+            return cached.get("hits", {}).get("hits", [])
+            
+        # Add delay to respect SEC rate limits (10 req/sec)
+        await self._respect_rate_limit()
+        
+        params = {
+            "keys": query,
+            "limit": str(limit)
         }
         
         try:
-            response = requests.get(url, headers=headers, params=params, timeout=10)
+            response = await self.client.get("/search-index", params=params)
             response.raise_for_status()
+            data = response.json()
             
-            # Check if response is JSON
-            if "application/json" in response.headers.get("Content-Type", ""):
-                return response.json()
-                
-            # For HTML responses, return a simplified response
-            return {"html": response.text}
-        except requests.RequestException as e:
-            logger.error(f"SEC EDGAR API error: {e}")
-            raise ValueError(f"Error fetching data from SEC EDGAR: {e}")
+            # Cache the response
+            self._cache_response(cache_key, data)
             
-    def search_company(self, company_name: str) -> Optional[Dict]:
+            # Extract company information from the response
+            results = []
+            if "hits" in data and "hits" in data["hits"]:
+                for hit in data["hits"]["hits"][:limit]:
+                    if "_source" in hit:
+                        results.append(hit["_source"])
+            
+            return results
+        
+        except Exception as e:
+            logger.error(f"Error searching companies in EDGAR API: {e}")
+            return []
+    
+    async def get_company_filings(
+        self, 
+        cik: str, 
+        form_types: Optional[List[str]] = None,
+        limit: int = 10
+    ) -> List[Dict[str, Any]]:
         """
-        Search for a company in the SEC EDGAR database.
+        Get company filings by CIK and optional form types.
         
         Args:
-            company_name: The company name to search for
+            cik: Company CIK number (with or without leading zeros)
+            form_types: Optional list of form types to filter by (e.g., ["10-K", "10-Q"])
+            limit: Maximum number of results to return
             
         Returns:
-            Dictionary with company information including CIK if found,
-            None otherwise
-        """
-        if not self.enabled:
-            logger.info("EDGAR integration is disabled")
-            return None
-            
-        # Check cache first
-        cache_key = f"search_{company_name}"
-        cached = self._get_cached_response(cache_key)
-        
-        if cached:
-            logger.info(f"Using cached EDGAR search results for '{company_name}'")
-            return cached
-            
-        # Prepare API request parameters
-        params = {
-            "company": company_name,
-            "owner": "exclude",
-            "action": "getcompany",
-            "output": "json",
-        }
-        
-        # Make the API request
-        logger.info(f"Searching SEC EDGAR for company '{company_name}'")
-        try:
-            response = self._make_api_request(EDGAR_SEARCH_URL, params)
-            self._cache_response(cache_key, response)
-            return response
-        except ValueError:
-            logger.error(f"Company not found in EDGAR: {company_name}")
-            return None
-            
-    def get_latest_filings(self, cik: str, count: int = 5) -> List[Dict]:
-        """
-        Get the latest filings for a company by CIK.
-        
-        Args:
-            cik: The CIK number (with or without leading zeros)
-            count: Maximum number of filings to retrieve
-            
-        Returns:
-            List of filing dictionaries with form type, date, and URL
+            List of filing information dictionaries
         """
         if not self.enabled:
             logger.info("EDGAR integration is disabled")
             return []
             
-        # Normalize CIK (remove leading zeros)
-        cik = cik.lstrip('0')
+        # Normalize CIK by removing leading zeros
+        cik_normalized = cik.strip("0")
+        if not cik_normalized.isdigit():
+            logger.error(f"Invalid CIK format: {cik}")
+            return []
         
         # Check cache first
-        cache_key = f"filings_{cik}"
+        cache_key = f"v2_filings_{cik_normalized}_{'-'.join(form_types or [])}_{limit}"
         cached = self._get_cached_response(cache_key)
         
         if cached:
-            logger.info(f"Using cached EDGAR filing data for CIK '{cik}'")
-            return cached.get("filings", [])
-            
-        # Prepare API request parameters
-        params = {
-            "CIK": cik,
-            "owner": "exclude",
-            "action": "getcompany",
-            "output": "json",
-            "count": str(count),
+            logger.info(f"Using cached EDGAR filings for CIK '{cik_normalized}'")
+            return cached.get("data", {}).get("hits", [])
+        
+        # Add delay to respect SEC rate limits (10 req/sec)
+        await self._respect_rate_limit()
+        
+        params: Dict[str, Any] = {
+            "ciks": cik_normalized,
+            "limit": str(limit)
         }
         
-        # Make the API request
-        logger.info(f"Fetching latest filings for CIK '{cik}'")
+        if form_types:
+            params["forms"] = ",".join(form_types)
+        
         try:
-            response = self._make_api_request(EDGAR_SEARCH_URL, params)
-            self._cache_response(cache_key, response)
+            response = await self.client.get("/filings", params=params)
+            response.raise_for_status()
+            data = response.json()
             
-            # Extract filings from response
-            filings = []
-            if "filings" in response and "recent" in response["filings"]:
-                recent = response["filings"]["recent"]
-                
-                for i in range(min(count, len(recent.get("filingDate", [])))):
-                    filing = {
-                        "form": recent.get("form", [])[i] if i < len(recent.get("form", [])) else "Unknown",
-                        "filing_date": recent.get("filingDate", [])[i] if i < len(recent.get("filingDate", [])) else "",
-                        "accession_number": recent.get("accessionNumber", [])[i] if i < len(recent.get("accessionNumber", [])) else "",
-                        "filing_url": f"https://www.sec.gov/Archives/edgar/data/{cik}/{recent.get('accessionNumber', [])[i].replace('-', '')}/{recent.get('primaryDocument', [])[i]}" if i < len(recent.get("accessionNumber", [])) and i < len(recent.get("primaryDocument", [])) else "",
-                    }
-                    filings.append(filing)
-                    
-            return filings
-        except ValueError:
-            logger.error(f"Could not retrieve filings for CIK: {cik}")
+            # Cache the response
+            self._cache_response(cache_key, data)
+            
+            return data.get("data", {}).get("hits", [])
+        
+        except Exception as e:
+            logger.error(f"Error getting company filings from EDGAR API v2: {e}")
             return []
-            
-    def extract_cik(self, response: Dict) -> Optional[str]:
+    
+    async def get_company_cik(self, company_name: str) -> Optional[str]:
         """
-        Extract the CIK number from an EDGAR API response.
+        Get a company's CIK by name.
         
         Args:
-            response: EDGAR API response
+            company_name: Company name to search for
             
         Returns:
             CIK number if found, None otherwise
         """
-        if not response:
+        if not self.enabled:
+            logger.info("EDGAR integration is disabled")
             return None
             
-        # Check for CIK in JSON response
-        if "cik" in response:
-            return response["cik"]
-            
-        if "CIK" in response:
-            return response["CIK"]
-            
-        # Check for CIK in structured response
-        try:
-            if "companies" in response and len(response["companies"]) > 0:
-                return response["companies"][0]["cik"]
-        except (KeyError, TypeError, IndexError):
-            pass
-            
-        # If response is HTML, try to extract CIK with regex
-        if "html" in response:
-            html = response["html"]
-            cik_match = re.search(r'CIK=(\d+)', html)
-            if cik_match:
-                return cik_match.group(1)
-                
-        return None
+        # Check in-memory cache first
+        if company_name.lower() in self._cik_cache:
+            return self._cik_cache[company_name.lower()]
         
-    def enrich_entity(self, entity: CorporateEntity) -> CorporateEntity:
+        # Search for the company
+        companies = await self.search_companies(company_name, limit=1)
+        if not companies:
+            logger.info(f"No company found in EDGAR for '{company_name}'")
+            return None
+        
+        # Extract CIK from the first match
+        cik = companies[0].get("cik")
+        if cik:
+            # Cache for future lookups
+            self._cik_cache[company_name.lower()] = cik
+            return cik
+        
+        return None
+    
+    async def enrich_entity(self, entity: CorporateEntity) -> CorporateEntity:
         """
-        Enrich a CorporateEntity with SEC EDGAR information.
+        Enrich a CorporateEntity with SEC EDGAR data.
         
         Args:
-            entity: The CorporateEntity to enrich
+            entity: CorporateEntity to enrich
             
         Returns:
-            The enriched CorporateEntity
+            Enriched CorporateEntity with SEC data
         """
         if not self.enabled:
             logger.info("EDGAR integration is disabled")
@@ -341,34 +316,45 @@ class EdgarClient:
             
         logger.info(f"Enriching entity {entity.name} with SEC EDGAR data")
         
-        # Search for the company
-        search_response = self.search_company(entity.name)
-        if not search_response:
-            logger.info(f"No EDGAR data found for {entity.name}")
+        try:
+            # Get company CIK
+            cik = await self.get_company_cik(entity.name)
+            if not cik:
+                logger.info(f"No CIK found for '{entity.name}'")
+                return entity
+            
+            # Store CIK in entity metadata
+            if not hasattr(entity, "metadata"):
+                entity.metadata = {}
+            entity.metadata["sec_cik"] = cik
+            
+            # Get recent filings
+            filings = await self.get_company_filings(cik, form_types=["10-K", "10-Q", "8-K"], limit=5)
+            
+            # Add SEC information to entity notes
+            sec_notes = [f"SEC CIK: {cik}"]
+            
+            if filings:
+                sec_notes.append("\nLatest SEC Filings:")
+                for filing in filings:
+                    form_type = filing.get("form", "Unknown")
+                    filing_date = filing.get("filingDate", "Unknown")
+                    filing_url = filing.get("fileUrl", "")
+                    
+                    sec_notes.append(f"- {form_type} ({filing_date}): {filing_url}")
+            
+            # Update entity notes
+            if entity.notes:
+                entity.notes += "\n\n" + "\n".join(sec_notes)
+            else:
+                entity.notes = "\n".join(sec_notes)
+            
             return entity
             
-        # Extract CIK
-        cik = self.extract_cik(search_response)
-        if not cik:
-            logger.warning(f"Could not extract CIK for {entity.name}")
+        except Exception as e:
+            logger.error(f"Error enriching entity with SEC data: {e}")
             return entity
-            
-        # Get latest filings
-        filings = self.get_latest_filings(cik, count=3)
-        
-        # Add SEC information to entity notes
-        sec_notes = [f"SEC CIK: {cik}"]
-        
-        if filings:
-            sec_notes.append("\nLatest SEC Filings:")
-            for filing in filings:
-                sec_notes.append(f"- {filing['form']} ({filing['filing_date']}): {filing['filing_url']}")
-                
-        # Update entity notes
-        if entity.notes:
-            entity.notes += "\n\n" + "\n".join(sec_notes)
-        else:
-            entity.notes = "\n".join(sec_notes)
-            
-        return entity
-"""
+    
+    async def _respect_rate_limit(self):
+        """Add a small delay to respect SEC's rate limit of 10 req/s."""
+        await asyncio.sleep(0.1)

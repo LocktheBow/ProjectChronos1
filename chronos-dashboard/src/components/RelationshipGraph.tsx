@@ -107,32 +107,52 @@ export default function RelationshipGraph({
           <ForceGraph2D
             ref={graphRef}
             graphData={graphData}
-            nodeRelSize={6}
-            nodeLabel={(node: any) => `${node.name} (${node.jurisdiction})`}
+            nodeRelSize={8}
+            nodeLabel={(node: any) => `${node.name} (${node.jurisdiction})\nStatus: ${node.status}`}
             nodeColor={(node: any) => STATUS_COLORS[node.status] || STATUS_COLORS.UNKNOWN}
-            linkDirectionalArrowLength={3.5}
+            linkDirectionalArrowLength={5}
             linkDirectionalArrowRelPos={1}
+            linkDirectionalParticles={2}
+            linkDirectionalParticleSpeed={0.005}
             linkLabel={(link: any) => `${link.value}% ownership`}
             onNodeClick={handleNodeClick}
             cooldownTicks={100}
             linkWidth={link => 1.5}
-            nodeCanvasObject={(node, ctx, globalScale) => {
+            nodeCanvasObject={(node: any, ctx, globalScale) => {
               // Node visualization
               const label = node.name;
               const fontSize = 12/globalScale;
               ctx.font = `${fontSize}px Sans-Serif`;
               
+              // Node size based on importance
+              const size = node.type === 'PRIMARY' ? 8 : 6;
+              
               // Draw node circle
               ctx.beginPath();
-              ctx.arc(node.x || 0, node.y || 0, 5, 0, 2 * Math.PI);
-              ctx.fillStyle = node.color;
+              ctx.arc(node.x || 0, node.y || 0, size, 0, 2 * Math.PI);
+              ctx.fillStyle = STATUS_COLORS[node.status] || STATUS_COLORS.UNKNOWN;
               ctx.fill();
+              
+              // Add border for selected node
+              if (selectedNode && node.id === selectedNode.id) {
+                ctx.beginPath();
+                ctx.arc(node.x || 0, node.y || 0, size + 2, 0, 2 * Math.PI);
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2 / globalScale;
+                ctx.stroke();
+              }
               
               // Draw text below the node
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-              ctx.fillText(label, node.x || 0, (node.y || 0) + 10);
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+              ctx.fillText(label, node.x || 0, (node.y || 0) + 12);
+              
+              // Draw status indicator
+              const statusLabel = node.status.split('_').join(' ');
+              ctx.font = `${fontSize * 0.8}px Sans-Serif`;
+              ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+              ctx.fillText(statusLabel, node.x || 0, (node.y || 0) + 24);
             }}
           />
         )}
@@ -161,19 +181,20 @@ export default function RelationshipGraph({
       
       {/* Entity detail panel */}
       {selectedNode && (
-        <div className="absolute top-4 right-4 bg-white p-4 shadow-lg rounded-lg max-w-xs">
+        <div className="absolute top-4 right-4 bg-white p-4 shadow-lg rounded-lg max-w-xs border-l-4" 
+             style={{ borderLeftColor: STATUS_COLORS[selectedNode.status] || STATUS_COLORS.UNKNOWN }}>
           <div className="flex justify-between items-start">
-            <h3 className="font-medium">{selectedNode.name}</h3>
+            <h3 className="font-semibold text-lg">{selectedNode.name}</h3>
             <button 
-              className="text-gray-400 hover:text-gray-600" 
+              className="text-gray-400 hover:text-gray-600 text-xl font-bold" 
               onClick={() => setSelectedNode(null)}
             >
               ×
             </button>
           </div>
-          <div className="mt-2 text-sm">
-            <p>
-              <span className="font-medium">Status:</span>{' '}
+          <div className="mt-3 text-sm space-y-2">
+            <div className="flex items-center">
+              <span className="font-medium w-24">Status:</span>
               <span 
                 className="px-2 py-1 rounded-full text-xs" 
                 style={{ 
@@ -181,15 +202,64 @@ export default function RelationshipGraph({
                   color: ['PENDING', 'DISSOLVED'].includes(selectedNode.status) ? '#000' : '#fff' 
                 }}
               >
-                {selectedNode.status}
+                {selectedNode.status.replace('_', ' ')}
               </span>
-            </p>
-            <p className="mt-1">
-              <span className="font-medium">Jurisdiction:</span> {selectedNode.jurisdiction}
-            </p>
-            <p className="mt-1">
-              <span className="font-medium">Type:</span> {selectedNode.type}
-            </p>
+            </div>
+            <div className="flex items-center">
+              <span className="font-medium w-24">Jurisdiction:</span> 
+              <span>{selectedNode.jurisdiction}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="font-medium w-24">Type:</span> 
+              <span>{selectedNode.type}</span>
+            </div>
+            
+            {/* Relationship details */}
+            {graphData && (
+              <>
+                <div className="mt-4 mb-2">
+                  <h4 className="font-medium text-gray-700 border-b pb-1">Relationships</h4>
+                </div>
+                
+                {/* Parent companies */}
+                {graphData.links.filter(link => link.target === selectedNode.id).length > 0 && (
+                  <div>
+                    <span className="font-medium">Owned by:</span>
+                    <ul className="list-disc list-inside ml-2 mt-1">
+                      {graphData.links
+                        .filter(link => link.target === selectedNode.id)
+                        .map(link => {
+                          const parentNode = graphData.nodes.find(n => n.id === link.source);
+                          return (
+                            <li key={`parent-${link.source}`} className="text-xs">
+                              {parentNode?.name} ({link.value}%)
+                            </li>
+                          );
+                        })}
+                    </ul>
+                  </div>
+                )}
+                
+                {/* Subsidiary companies */}
+                {graphData.links.filter(link => link.source === selectedNode.id).length > 0 && (
+                  <div className="mt-2">
+                    <span className="font-medium">Owns:</span>
+                    <ul className="list-disc list-inside ml-2 mt-1">
+                      {graphData.links
+                        .filter(link => link.source === selectedNode.id)
+                        .map(link => {
+                          const subsidNode = graphData.nodes.find(n => n.id === link.target);
+                          return (
+                            <li key={`subsidiary-${link.target}`} className="text-xs">
+                              {subsidNode?.name} ({link.value}%)
+                            </li>
+                          );
+                        })}
+                    </ul>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}

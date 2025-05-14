@@ -468,4 +468,3 @@ class OpenCorporatesScraper(SoSScraper):
         except (KeyError, TypeError, AttributeError) as e:
             logger.error(f"Error parsing OpenCorporates company data: {e}")
             return None
-"""

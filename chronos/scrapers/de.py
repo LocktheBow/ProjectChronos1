@@ -18,6 +18,7 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 
 from chronos.models import CorporateEntity, Status
+from chronos.settings import SCRAPER_TIMEOUT, SCRAPER_USER_AGENT
 from .base import SoSScraper
 
 # Try to find the HTML next to where the app is launched (project root during dev)

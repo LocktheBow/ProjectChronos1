@@ -40,6 +40,7 @@ __all__ = [
     "relationships",
     "lifecycle",
     "viz",
+    "settings",
 ]
 
 __version__ = "0.1.0"
