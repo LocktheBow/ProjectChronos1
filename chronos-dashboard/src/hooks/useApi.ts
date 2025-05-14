@@ -91,14 +91,47 @@ interface RelationshipGraph {
  * Fetch the relationship graph from the /relationships endpoint
  * @param signal Optional AbortSignal for cancellation
  * @param loadExamples Optional flag to force loading example relationships
+ * @param clearRelationships Optional flag to clear all relationships
  */
 export async function fetchRelationships(
   signal?: AbortSignal,
   loadExamples?: boolean,
+  clearRelationships?: boolean,
 ): Promise<RelationshipGraph> {
-  const url = loadExamples 
-    ? "/relationships?load_examples=true" 
-    : "/relationships";
+  let url = "/relationships";
+  const params = new URLSearchParams();
+  
+  if (loadExamples) {
+    params.append("load_examples", "true");
+  }
+  
+  if (clearRelationships) {
+    params.append("clear_relationships", "true");
+  }
+  
+  // Only add query string if we have parameters
+  if (params.toString()) {
+    url += `?${params.toString()}`;
+  }
+  
+  // For clearing relationships, first try the dedicated endpoint
+  if (clearRelationships) {
+    try {
+      // Try the clear-all endpoint first
+      await fetch('/relationships/clear-all', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' } 
+      });
+      
+      // Then try force-clear
+      await fetch('/relationships/force-clear');
+      
+      console.log("Applied multiple clearing methods before fetching relationships");
+    } catch (e) {
+      console.warn("Pre-fetch clearing methods failed:", e);
+    }
+  }
+  
   return api<RelationshipGraph>(url, { signal });
 }
 
@@ -187,8 +220,8 @@ function saveSearchToCache(query: string, state: string | undefined, results: En
 export function searchEntities(
   q: string,
   state?: string,
-  signal?: AbortSignal,
-  useCobalt: boolean = true
+  useCobalt: boolean = true,
+  signal?: AbortSignal
 ): Promise<EntityHit[]> {
   const params = new URLSearchParams({ q });
   if (state) params.append("state", state);

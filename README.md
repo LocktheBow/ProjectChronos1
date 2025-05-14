@@ -175,3 +175,5 @@ Project Chronos utilizes multiple specialized data structures to efficiently man
 ## License
 
 This project is licensed under the terms included in the LICENSE file.
+
+Writing was the only way for me to think clearly and channel monomaniacal focus during this project, constant iteration with pen and paper with my notebook allowed this project to arise out of my consciousness.

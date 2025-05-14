@@ -53,6 +53,10 @@ from .edgar import router as edgar_router
 from .axle_v2 import router as axle_v2_router
 from .opencorp import router as opencorp_router
 from .cobalt import router as cobalt_router
+from .reset import router as reset_router
+from .relationships import router as relationships_router
+from .entity_list import router as entity_list_router
+from .explicit_clear import router as explicit_clear_router
 
 app.include_router(sosearch_router)
 app.include_router(axle_router)
@@ -60,6 +64,10 @@ app.include_router(axle_v2_router)  # New Data Axle router with improved auth
 app.include_router(edgar_router)
 app.include_router(opencorp_router)  # New OpenCorporates router
 app.include_router(cobalt_router)    # New Cobalt Intelligence router
+app.include_router(reset_router)     # Graph reset functionality
+app.include_router(relationships_router, prefix="/relationships") # Direct relationship management
+app.include_router(entity_list_router)  # Entity listing for dropdowns
+app.include_router(explicit_clear_router)  # Explicit graph clearing methods
 
 # ---------- health-check ----------
 @app.get("/")
@@ -206,12 +214,19 @@ async def search_entities(
     ]
     return summaries
 
-# ---------- GET /relationships ----------
+# Model for creating parent-child relationships
+class ParentChildRelationship(BaseModel):
+    parent_slug: str
+    child_slug: str
+    ownership_percentage: float
+
+# ---------- GET/POST /relationships ----------
 @app.get("/relationships")
 def get_relationships(
     rg: RelationshipGraph = Depends(get_relationships),
     pm: PortfolioManager = Depends(get_portfolio),
     load_examples: bool = Query(False, description="Force loading example relationships"),
+    clear_relationships: bool = Query(False, description="Clear all relationship connections"),
 ):
     """
     Return the corporate relationship graph for visualization.
@@ -220,6 +235,31 @@ def get_relationships(
     Each node includes entity data like status and jurisdiction.
     Each link includes the ownership percentage.
     """
+    # Handle clear relationships request
+    if clear_relationships:
+        print("Clearing all relationships from graph")
+        
+        try:
+            # Import our utility function
+            from .clear_graph import clear_graph
+            
+            # Reset the graph completely
+            rg = clear_graph()
+            
+            print("Created a fresh relationship graph - all relationships cleared")
+        except Exception as e:
+            print(f"Error clearing graph: {e}")
+            
+            # Fallback method: manually clear edges
+            try:
+                # Remove all edges but keep nodes
+                edges = list(rg.g.edges())
+                for source, target in edges:
+                    rg.g.remove_edge(source, target)
+                print(f"Fallback method: Removed {len(edges)} edges while preserving nodes")
+            except Exception as edge_error:
+                print(f"Error in fallback edge removal: {edge_error}")
+        
     # Ensure all entities from portfolio are in the graph with their metadata
     for entity in pm:
         rg.add_entity_data(entity)
@@ -288,6 +328,78 @@ def get_relationships(
     
     # Convert to JSON format for the frontend
     return rg.to_json()
+
+# ---------- POST /relationships ----------
+@app.post("/relationships", status_code=201)
+def create_relationship(
+    relationship: ParentChildRelationship,
+    rg: RelationshipGraph = Depends(get_relationships),
+    pm: PortfolioManager = Depends(get_portfolio),
+):
+    """
+    Create a parent-child ownership relationship between two entities.
+    
+    Args:
+        relationship: Parent-child relationship details with ownership percentage
+        
+    Returns:
+        Confirmation of the created relationship
+    """
+    try:
+        # Verify both entities exist in portfolio
+        parent_entity = None
+        child_entity = None
+        
+        for entity in pm:
+            slug = entity.name.lower().replace(" ", "-")
+            if slug == relationship.parent_slug:
+                parent_entity = entity
+            if slug == relationship.child_slug:
+                child_entity = entity
+                
+        if not parent_entity:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Parent entity not found with slug: {relationship.parent_slug}"
+            )
+            
+        if not child_entity:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Child entity not found with slug: {relationship.child_slug}"
+            )
+            
+        # Validate ownership percentage
+        if not (0 <= relationship.ownership_percentage <= 100):
+            raise HTTPException(
+                status_code=400,
+                detail="Ownership percentage must be between 0 and 100"
+            )
+        
+        # Add entity data to graph if needed
+        rg.add_entity_data(parent_entity)
+        rg.add_entity_data(child_entity)
+        
+        # Create the parent-child relationship
+        rg.link_parent(
+            relationship.parent_slug,
+            relationship.child_slug,
+            relationship.ownership_percentage
+        )
+        
+        return {
+            "status": "success",
+            "message": f"Created relationship: {parent_entity.name} owns {relationship.ownership_percentage}% of {child_entity.name}",
+            "parent": relationship.parent_slug,
+            "child": relationship.child_slug,
+            "percentage": relationship.ownership_percentage
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error creating relationship: {e}")
+        raise HTTPException(status_code=500, detail=f"Error creating relationship: {str(e)}")
 
 # ---------- GET /shell-detection ----------
 @app.get("/shell-detection")

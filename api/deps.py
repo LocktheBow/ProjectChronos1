@@ -30,10 +30,14 @@ def get_portfolio() -> DBPortfolioManager:
     return DBPortfolioManager()
 
 
-@lru_cache
+_relationship_graph = None
+
 def get_relationships() -> RelationshipGraph:
     """Singleton relationship graph (persists across requests)."""
-    return RelationshipGraph()
+    global _relationship_graph
+    if _relationship_graph is None:
+        _relationship_graph = RelationshipGraph()
+    return _relationship_graph
 
 
 @lru_cache

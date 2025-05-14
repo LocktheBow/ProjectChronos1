@@ -1,7 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import RelationshipGraph from '../components/RelationshipGraph';
 import ShellDetection from '../components/ShellDetection';
 import EdgarRelationshipsButton from '../components/EdgarRelationshipsButton';
+import ClearRelationshipsButton from '../components/ClearRelationshipsButton';
+import RelationshipForm from '../components/RelationshipForm';
+import { fetchRelationships } from '../hooks/useApi';
 
 const POLL_INTERVAL = 15000; // 15 seconds
 
@@ -11,7 +14,25 @@ export default function Relationships() {
   const [showArrows, setShowArrows] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showRelationshipForm, setShowRelationshipForm] = useState(false);
   const graphRef = useRef<any>(null);
+  
+  // Clear relationships on initial load to ensure a clean start
+  useEffect(() => {
+    async function clearInitialRelationships() {
+      try {
+        console.log("Clearing any existing relationships on initial page load...");
+        // Clear relationships on startup
+        await fetchRelationships(undefined, false, true);
+        // Refresh the graph display
+        setRefreshKey(prevKey => prevKey + 1);
+      } catch (error) {
+        console.error("Error clearing initial relationships:", error);
+      }
+    }
+    
+    clearInitialRelationships();
+  }, []);
   
   // Reset zoom to default view
   const handleResetZoom = () => {
@@ -75,25 +96,29 @@ export default function Relationships() {
                 >
                   Full Screen
                 </button>
-                <EdgarRelationshipsButton onRefresh={handleDataRefresh} />
+                <button 
+                  className="px-3 py-1 bg-indigo-600 text-white border border-indigo-700 rounded text-sm hover:bg-indigo-700"
+                  onClick={() => setShowRelationshipForm(!showRelationshipForm)}
+                >
+                  {showRelationshipForm ? 'Hide Form' : 'Add Relationship'}
+                </button>
+                <ClearRelationshipsButton onRefresh={handleDataRefresh} />
               </div>
             </div>
+            {showRelationshipForm && (
+              <div className="mb-6 border-b pb-6">
+                <RelationshipForm 
+                  onSuccess={handleDataRefresh} 
+                  onClose={() => setShowRelationshipForm(false)}
+                />
+              </div>
+            )}
+            
             <p className="text-sm text-gray-600 mb-4">
               Interactive visualization of corporate ownership relationships. Click on any entity to see details.
             </p>
-            <div className="mt-4 graph-container bg-white w-full">
-              <RelationshipGraph 
-                height={600}
-                width="100%"
-                pollInterval={POLL_INTERVAL}
-                showLabels={showLabels}
-                showArrows={showArrows}
-                statusFilter={statusFilter}
-                graphRef={graphRef}
-                refreshKey={refreshKey}
-              />
-            </div>
-            <div className="mt-4 text-xs text-gray-500 flex flex-wrap gap-4">
+            {/* Legend display BEFORE graph to prevent overlap */}
+            <div className="mb-4 pb-2 border-b border-gray-100 text-xs text-gray-500 flex flex-wrap gap-4">
               <div className="flex items-center">
                 <span className="w-3 h-3 inline-block mr-1 rounded-full bg-[#fde047]"></span> Pending
               </div>
@@ -110,11 +135,24 @@ export default function Relationships() {
                 <span className="w-3 h-3 inline-block mr-1 rounded-full bg-[#64748b]"></span> Dissolved
               </div>
             </div>
+            
+            <div className="mt-4 graph-container bg-white w-full">
+              <RelationshipGraph 
+                height={600}
+                width="100%"
+                pollInterval={POLL_INTERVAL}
+                showLabels={showLabels}
+                showArrows={showArrows}
+                statusFilter={statusFilter}
+                graphRef={graphRef}
+                refreshKey={refreshKey}
+              />
+            </div>
           </div>
         </div>
 
         {/* Sidebar */}
-        <div>
+        <div className="lg:w-full max-w-xs">
           {/* Controls */}
           <div className="bg-white shadow rounded-lg p-4 mb-6">
             <h3 className="font-medium text-gray-900 mb-3">Graph Controls</h3>
@@ -161,7 +199,7 @@ export default function Relationships() {
           </div>
 
           {/* Shell detection */}
-          <div className="bg-white shadow rounded-lg p-4">
+          <div className="bg-white shadow rounded-lg p-4 max-w-full overflow-hidden">
             <div className="flex justify-between items-center mb-3">
               <h3 className="font-medium text-gray-900">Shell Detection</h3>
               <button 
@@ -171,7 +209,11 @@ export default function Relationships() {
                 {showShellDetection ? 'Hide' : 'Show'}
               </button>
             </div>
-            {showShellDetection && <ShellDetection pollInterval={POLL_INTERVAL} />}
+            {showShellDetection && (
+              <div className="max-h-[300px] overflow-y-auto">
+                <ShellDetection pollInterval={POLL_INTERVAL} />
+              </div>
+            )}
           </div>
         </div>
       </div>
