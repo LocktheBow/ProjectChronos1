@@ -1,10 +1,14 @@
 /* -------- Global tweaks that complement Tailwind -------- */
 
-/* Ensure the main wrapper doesn’t exceed the viewport width and uses readable padding */
+/* Ensure the main wrapper doesn't exceed the viewport width and uses readable padding */
 #root {
   max-width: 100%;
+  width: 100%;
   margin: 0 auto;
-  padding: 1.25rem; /* 20 px */
+  padding: 1.25rem; /* 20 px */
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 /* Smooth scroll across the app */
@@ -51,4 +55,14 @@ html {
 }
 .animate-fade-in-up {
   animation: fadeInUp 0.35s ease-out both;
+}
+
+/* Make sure components fill the full width */
+.container {
+  width: 100%;
+}
+
+/* Ensure the relationships page takes full width */
+.grid {
+  width: 100%;
 }

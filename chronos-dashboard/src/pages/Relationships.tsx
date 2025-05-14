@@ -37,7 +37,7 @@ export default function Relationships() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="container mx-auto px-4 py-8 w-full">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-900 mb-2">Corporate Relationship Analysis</h1>
         <p className="text-gray-600">
@@ -45,10 +45,10 @@ export default function Relationships() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 w-full">
         {/* Main graph area */}
-        <div className="lg:col-span-3">
-          <div className="bg-white shadow rounded-lg p-6 mb-6">
+        <div className="lg:col-span-3 w-full">
+          <div className="bg-white shadow rounded-lg p-6 mb-6 w-full">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-medium text-gray-900">Ownership Network</h2>
               <div className="flex gap-2">
@@ -69,9 +69,10 @@ export default function Relationships() {
             <p className="text-sm text-gray-600 mb-4">
               Interactive visualization of corporate ownership relationships. Click on any entity to see details.
             </p>
-            <div className="mt-4 graph-container bg-white">
+            <div className="mt-4 graph-container bg-white w-full">
               <RelationshipGraph 
-                height={600} 
+                height={600}
+                width="100%"
                 pollInterval={POLL_INTERVAL}
                 showLabels={showLabels}
                 showArrows={showArrows}

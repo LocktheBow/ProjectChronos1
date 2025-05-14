@@ -15,15 +15,17 @@ import './theme.css';
 export default function App() {
   return (
     <BrowserRouter>
-      <Layout>
-        <Routes>
-          <Route index element={<Dashboard />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/relationships" element={<Relationships />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </Layout>
+      <div className="app-container w-full h-full">
+        <Layout>
+          <Routes>
+            <Route index element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/relationships" element={<Relationships />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </Layout>
+      </div>
     </BrowserRouter>
   );
 }

@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  width: 100%;
 }
 
 .header {
@@ -78,4 +79,5 @@
 .content {
   flex: 1;
   padding: var(--space-lg);
+  width: 100%;
 }
