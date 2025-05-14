@@ -40,6 +40,16 @@ class RelationshipGraph:
         """
         if not (0.0 <= pct <= 100.0):
             raise ValueError("pct must be between 0 and 100")
+            
+        # Ensure both nodes exist in the graph before creating edge
+        if parent not in self.g:
+            self.g.add_node(parent)
+            print(f"Adding missing node: {parent}")
+            
+        if child not in self.g:
+            self.g.add_node(child)
+            print(f"Adding missing node: {child}")
+            
         self.g.add_edge(parent, child, pct=pct)
 
     def subsidiaries(self, parent: str):

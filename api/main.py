@@ -226,9 +226,12 @@ def get_relationships(
         
     # Add some sample relationships if graph is empty or explicitly requested
     if load_examples or len(list(rg.g.edges())) == 0:
+        # When loading examples, clear the graph completely first
         if load_examples:
-            # Clear existing relationships when explicitly loading examples
+            print("Clearing existing graph for example loading")
             rg.g.clear()
+            # Also clear entity data since we'll reload from example file
+            rg._entity_data.clear()
         
         # Find some entities to connect if not explicitly loading examples
         if not load_examples and len(list(pm)) >= 3:
@@ -244,12 +247,20 @@ def get_relationships(
         # Load sample relationships data for demo
         import json
         import os
+        from datetime import date
         sample_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 
             "chronos-dashboard", "public", "example_relationships.json")
         try:
             if os.path.exists(sample_path):
+                print(f"Loading example relationships from {sample_path}")
                 with open(sample_path, 'r') as f:
                     example_data = json.load(f)
+                
+                print(f"Found {len(example_data.get('nodes', []))} nodes and {len(example_data.get('links', []))} links in example data")
+                
+                # Clear portfolio if loading examples explicitly to avoid duplicates
+                if load_examples:
+                    pm.clear()
                     
                 # Add nodes and relationships from example data
                 for node in example_data.get('nodes', []):
@@ -257,18 +268,23 @@ def get_relationships(
                         name=node['name'],
                         jurisdiction=node['jurisdiction'],
                         status=getattr(Status, node['status']),
-                        formed=None
+                        formed=date.today()  # Use today as default date
                     )
                     pm.add(entity)
                     rg.add_entity_data(entity)
                 
                 # Add edges
                 for link in example_data.get('links', []):
-                    rg.link_parent(link['source'], link['target'], link['value'])
-                    
-                print(f"Loaded example relationships: {len(example_data.get('nodes', []))} nodes, {len(example_data.get('links', []))} links")
+                    try:
+                        rg.link_parent(link['source'], link['target'], link['value'])
+                    except Exception as edge_error:
+                        print(f"Error adding edge {link['source']} -> {link['target']}: {edge_error}")
+                
+                print(f"Successfully loaded example relationships: {len(example_data.get('nodes', []))} nodes, {len(example_data.get('links', []))} links, {len(list(rg.g.edges()))} edges in graph")
         except Exception as e:
+            import traceback
             print(f"Failed to load example relationships: {e}")
+            traceback.print_exc()
     
     # Convert to JSON format for the frontend
     return rg.to_json()
