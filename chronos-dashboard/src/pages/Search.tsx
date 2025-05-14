@@ -4,7 +4,7 @@ import StatusChart from "../components/StatusChart";
 import { 
   searchEntities, 
   searchSos, 
-  searchAxle, 
+  searchCobalt, 
   searchEdgar, 
   getCachedSearchResults 
 } from "../hooks/useApi";
@@ -61,7 +61,7 @@ export default function Search() {
 
   async function runSearch(params: SearchParams) {
     const stateCode = params.state?.trim().toLowerCase() ?? "";
-    const provider = params.provider || 'dataaxle';
+    const provider = params.provider || 'cobalt';
     
     setLoading(true);
     setSelected(null);
@@ -86,9 +86,9 @@ export default function Search() {
               // Include filing information if available
               ...(company.filing_date ? { formed: company.filing_date } : {})
             }));
-          } else if (provider === 'dataaxle') {
-            // Use Data Axle search
-            searchResults = await searchAxle(params.q, stateCode);
+          } else if (provider === 'cobalt') {
+            // Use Cobalt Intelligence search
+            searchResults = await searchCobalt(params.q, stateCode);
           } else if (provider === 'sos') {
             // Use Secretary of State search
             if (stateCode) {

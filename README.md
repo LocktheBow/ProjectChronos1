@@ -1,103 +1,177 @@
-## 🚀 Project Roadmap
+# Project Chronos
 
-| Phase | Target Date | Description | Status |
-|-------|-------------|-------------|--------|
-| 1. Repository Skeleton | **DONE** | Folders, stub modules, CI skeleton | ✅ Complete |
-| 2. Core Data Models | Day 0 – Day 1 | `CorporateEntity`, `Status`, unit tests | ✅ Complete |
-| 3. Portfolio & Relationships | Day 1 – Day 2 | `PortfolioManager`, `RelationshipGraph` + tests | ✅ Complete |
-| 4. Lifecycle Engine | Day 2 | State‑machine guards & tests | ✅ Complete |
-| 5. Visualization Layer | Day 3 | Bar chart + ownership graph (MVP) | ✅ **MVP delivered** |
-| 6. CLI Demo & Sample Data | Day 4 | `python -m chronos.cli sample.json` | 🟢 In Progress |
-| 7. Docs & Notebook | Day 5 | Filled README, demo notebook screenshots | 🟡 Drafting |
-| 8. Test Coverage ≥ 90 % | Day 6 | 9 core tests pass, coverage rising | 🟢 In Progress |
-| 9. Polishing & Packaging | Day 7 | Type hints, docstrings, `pip install .` | ⏳ Pending |
-| 10. Final Tag `v1.0-final` | **May 14 09:00** | Freeze code, hand‑in | ⏳ Pending |
+A comprehensive system for tracking and visualizing corporate entities across their lifecycle, with multi-source data integration from all 50 states.
 
-## ✅ Requirements Compliance Tracker
+![Status Dashboard](static-assets/status_snapshot.png)
 
-- [x] **Proposal submitted** (initial & final) citeturn4file0
-- [x] **Python chosen as primary language**
-- [x] **GitHub repo with regular commits**
-- [x] **Core data‑structures implemented & tested**
-- [x] **CLI demo renders `status_snapshot.png`**
-- [x] **FastAPI backend (`/entities`, `/status`, `/sosearch`) live**
-- [x] **React + Tailwind UI prototype (search + chart)**
-- [x] **Visualization of relationships & status**
-- [x] **50‑state scraper layer via OpenCorporates API integration**
-- [x] **EDGAR integration for SEC filing enrichment**
-- [ ] Full test coverage ≥ 90 %
-- [ ] Docker compose one‑click stack
-- [ ] Live demo content & slides
+## Overview
 
-## 🔭 Next Steps (rolling 48 h)
+Project Chronos is designed to track and analyze corporate entity data with:
 
-- **Front‑end polish** – Tailwind styling, loading states, bind live `/status` counts.
-- **API token setup** – add instructions for setting up OpenCorporates and SEC accounts.
-- **Docs refresh** – embed updated UI screenshots & quick‑start commands.
+- Lifecycle status management
+- Entity ownership and relationship visualization 
+- Advanced shell company detection
+- Multi-source data integration with Cobalt Intelligence and SEC EDGAR
+- Interactive visualization dashboard
 
----
+## Features
 
-## 🛠️ OpenCorporates & EDGAR Integration
+- **Corporate Entity Tracking**: Monitor entities across their complete lifecycle 
+- **Relationship Mapping**: Visualize parent-subsidiary relationships and ownership chains
+- **Shell Company Detection**: Advanced analytics to identify potential shell company structures
+- **Multi-Source Data**: Integration with Cobalt Intelligence API for comprehensive 50-state coverage
+- **Interactive Dashboard**: React-based UI with relationship graph visualization
 
-The project now uses the OpenCorporates API to provide comprehensive business entity data
-across all 50 US states and international jurisdictions, along with optional SEC EDGAR enrichment.
+## Project Structure
 
-### OpenCorporates Configuration
+### Core Backend
 
-To use the OpenCorporates API integration:
+- **`chronos/models.py`**: Core data models including `CorporateEntity` and `Status` enum
+- **`chronos/portfolio.py`**: In-memory entity portfolio management
+- **`chronos/portfolio_db.py`**: SQLite-backed persistent storage
+- **`chronos/relationships.py`**: Entity connection modeling
+- **`chronos/lifecycle.py`**: Status transition management
 
-1. Sign up for an API key at [OpenCorporates](https://opencorporates.com/api_accounts/new)
-2. Set the API key as an environment variable:
-   ```
-   export OPENCORP_API_TOKEN=your-api-token
-   ```
+### API Endpoints
 
-### SEC EDGAR Configuration
+- **`api/main.py`**: Main FastAPI application
+- **`api/cobalt.py`**: Cobalt Intelligence API integration
+- **`api/edgar.py`**: SEC EDGAR integration endpoints
 
-To enable SEC EDGAR enrichment:
+### Frontend
 
-1. Enable the EDGAR integration with an environment variable:
-   ```
-   export ENABLE_EDGAR=true
-   ```
-2. Optionally set a descriptive User-Agent to identify your application to the SEC:
-   ```
-   export EDGAR_USER_AGENT="Your Company Name (contact@example.com)"
-   ```
+- **`EntityTable.tsx`**: Interactive entity listing
+- **`StatusChart.tsx`**: Status visualization
+- **`RelationshipGraph.tsx`**: Force-directed graph visualization
+- **`ShellDetection.tsx`**: Shell company risk analysis
 
-### Rate Limits & Caching
+## Shell Company Detection
 
-- OpenCorporates free tier is limited to 10 requests per hour
-- All API responses are cached for 24 hours to minimize API calls
-- The cache is stored in SQLite at `./chronos_cache.db` by default
-- Set a custom cache directory with `CHRONOS_CACHE_DIR` environment variable
+The system includes a multi-factor shell company detection algorithm that identifies potential shell entities based on entity attributes and known risk patterns.
 
----
-# ProjectChronos1
+### Algorithm Overview
 
----
+The shell detection algorithm assigns risk scores based on these factors:
 
-## 🌐 Web Interface & 50‑State Search Roadmap
+1. **Entity Structure and Type** (40% of risk score)
+   - LLC structure with limited visibility (+30% risk)
+   - Holding company naming patterns (+15% risk)
+   - Delinquent filing status (+20% risk)
+   - Missing formation date or recent formation (+10% risk)
 
-The high‑level path to evolve Chronos from a CLI toolkit into a
-browser‑based dashboard that pulls Secretary‑of‑State data from all 50
-U.S. jurisdictions *plus* SEC EDGAR filings.
+2. **Jurisdiction Analysis** (30% of risk score)
+   - Incorporation in known shell-friendly jurisdictions: 
+     - Delaware (+15% risk)
+     - Wyoming (+15% risk)
+     - Nevada (+15% risk)
+   - Delaware LLC with limited transparency requirements (+25% risk)
 
-| Stage | Milestone | Concrete Deliverable |
-|-------|-----------|----------------------|
-| **A** | REST API surface | `api/` FastAPI app exposing `/entities`, `/status`, `/relationships`, `/sosearch?state=DE&query=acme` |
-| **B** | 50‑State scraper layer | `chronos/scrapers/openc.py` – OpenCorporates API integration for all 50 states, inheriting from `BaseScraper`; responses cached in SQLite |
-| **C** | EDGAR integration | `chronos/scrapers/edgar.py` – SEC EDGAR API integration for enriching entities with CIK numbers and latest filing URLs |
-| **D** | React/Tailwind front‑end | `ui/` folder (Vite app) with: <br>• Search bar (unified SoS + EDGAR) <br>• Status snapshot card <br>• Ownership network D3 panel |
-| **E** | Auth & multi‑portfolio | Simple OAuth (GitHub / Google) → each user sees only their saved portfolios |
-| **F** | Docker compose | `docker-compose.yml` spins up API, worker, and UI so graders run `docker compose up` and get the full stack |
-| **G** | One‑click deploy | Render .com or Fly.io blueprint + GitHub Action (`on: push`) that builds & deploys main branch |
+3. **Ownership Patterns** (30% of risk score)
+   - Entities owned but with no subsidiaries
+   - Chains of single-child ownership
+   - Shared officers across multiple entities
 
-> **Current position:** Stages **A**, **B**, and **C** are completed. Core Python
-> data‑models now power the API, with OpenCorporates API integration for entity lookup
-> across all jurisdictions and EDGAR integration for SEC filing information.
-> The React UI is connected to the API endpoints for searching and visualization.
+### Example Shell Company Structure
 
-Use this table as the guiding checklist before touching code for the web
-phase. Feel free to modify priorities or swap hosting targets as team
-preferences evolve.
+```
+Central Holdings (WY)
+├── Global Services Inc (100%)
+└── Pacific Group (51%)
+
+Acme Corporation (DE)
+├── TechStart LLC (100%)
+└── Widget Industries (75%)
+```
+
+In this example, TechStart LLC would receive a high risk score (65%) due to:
+- LLC structure with limited visibility (+30%)
+- Owned but has no subsidiaries (+30%)
+- Delaware jurisdiction (+5%)
+
+## Data Sources
+
+The system integrates with two primary data sources:
+
+### 1. Cobalt Intelligence API
+- Comprehensive data for all 50 US states
+- Company details, officers, filings, UCC data
+
+### 2. SEC EDGAR Integration
+- SEC filing information and CIK numbers
+
+## Relationship Visualization
+
+The system implements a force-directed graph visualization for entity relationships:
+
+- Color-coded nodes based on entity status:
+  - PENDING: `#fde047` (yellow)
+  - ACTIVE: `#4f46e5` (indigo)
+  - IN_COMPLIANCE: `#10b981` (green)
+  - DELINQUENT: `#ef4444` (red)
+  - DISSOLVED: `#64748b` (slate)
+
+- Directed edges showing parent-subsidiary relationships with ownership percentages
+- Interactive node selection and zooming
+- Filtering capabilities for complex relationship networks
+
+## Data Structures
+
+Project Chronos utilizes multiple specialized data structures to efficiently manage, store, and visualize corporate entity data:
+
+### Core Data Structures
+
+1. **Graph (NetworkX DiGraph)**
+   - **Location**: `chronos/relationships.py`
+   - **Usage**: Models parent-subsidiary relationships between corporate entities
+   - **Why**: Provides efficient traversal of corporate hierarchies, ownership chains, and visualization of relationships
+   - **Implementation**: Uses NetworkX's directed graph (DiGraph) with nodes for entities and edges for ownership relationships
+
+2. **Dictionary-Based Registry**
+   - **Location**: `chronos/portfolio.py`
+   - **Usage**: In-memory storage for quick entity lookup and retrieval
+   - **Why**: O(1) lookup time by entity slug, efficient for frequent queries
+   - **Implementation**: Python dictionary with slugified entity names as keys and `CorporateEntity` objects as values
+
+3. **SQLite-Backed Persistent Store**
+   - **Location**: `chronos/portfolio_db.py` and `chronos/db.py`
+   - **Usage**: Database persistence layer for long-term entity storage
+   - **Why**: Preserves data between application restarts, allows for querying by various attributes
+   - **Implementation**: SQLModel ORM mapping `CorporateEntity` objects to database rows
+
+4. **Enum-Based State Machine**
+   - **Location**: `chronos/models.py` (Status enum) and `chronos/lifecycle.py`
+   - **Usage**: Tracks and manages entity lifecycle states
+   - **Why**: Provides type safety and clear state transitions for entity lifecycle management
+   - **Implementation**: Python Enum with status values (PENDING, ACTIVE, etc.) and state transition guards
+
+5. **Dataclass Models**
+   - **Location**: `chronos/models.py`
+   - **Usage**: Structured representation of business entities and their attributes
+   - **Why**: Type-safe, self-documenting code with automatic validation
+   - **Implementation**: Python dataclasses for `CorporateEntity` with appropriate type hints
+
+### Specialized Algorithms
+
+1. **Shell Company Detection Algorithm**
+   - **Location**: `chronos/relationships.py` and `api/main.py`
+   - **Usage**: Multi-factor risk scoring for potential shell companies
+   - **Why**: Identifies suspicious patterns in corporate structures
+   - **Implementation**: Weighted scoring algorithm using graph analysis and entity attributes
+
+2. **Force-Directed Graph Layout**
+   - **Location**: `chronos-dashboard/src/components/RelationshipGraph.tsx`
+   - **Usage**: Visual representation of corporate relationships
+   - **Why**: Intuitive visualization of complex corporate structures
+   - **Implementation**: D3.js force simulation with custom node and link rendering
+
+## Implementation Details
+
+- Backend: Python with FastAPI
+- Frontend: React with Tailwind CSS
+- Data visualization: D3.js with react-force-graph
+- Database: SQLite for persistence
+- API integrations: Cobalt Intelligence, SEC EDGAR
+
+## License
+
+This project is licensed under the terms included in the LICENSE file.

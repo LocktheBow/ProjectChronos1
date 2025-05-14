@@ -39,18 +39,32 @@ interface RelationshipGraphProps {
   height?: number;
   /** Polling interval in ms, set to 0 to disable */
   pollInterval?: number;
+  /** Whether to show node labels */
+  showLabels?: boolean;
+  /** Whether to show directional arrows */
+  showArrows?: boolean;
+  /** Status filter for nodes */
+  statusFilter?: string;
+  /** Ref for accessing the graph instance */
+  graphRef?: React.RefObject<any>;
 }
 
 export default function RelationshipGraph({
   width = '100%',
   height = 500,
-  pollInterval = 0
+  pollInterval = 0,
+  showLabels = true,
+  showArrows = true,
+  statusFilter = '',
+  graphRef: externalGraphRef
 }: RelationshipGraphProps) {
-  const [graphData, setGraphData] = useState<RelationshipGraphData | null>(null);
+  const [rawGraphData, setRawGraphData] = useState<RelationshipGraphData | null>(null);
+  const [filteredGraphData, setFilteredGraphData] = useState<RelationshipGraphData | null>(null);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const graphRef = useRef<any>(null);
+  const internalGraphRef = useRef<any>(null);
+  const graphRef = externalGraphRef || internalGraphRef;
 
   // Fetch relationship data
   useEffect(() => {
@@ -62,7 +76,7 @@ export default function RelationshipGraph({
         setLoading(true);
         const data = await fetchRelationships(controller.signal);
         if (isMounted) {
-          setGraphData(data);
+          setRawGraphData(data);
           setError(null);
         }
       } catch (err) {
@@ -89,6 +103,50 @@ export default function RelationshipGraph({
     };
   }, [pollInterval]);
 
+  // Apply filters when raw data or status filter changes
+  useEffect(() => {
+    if (!rawGraphData) return;
+    
+    if (!statusFilter) {
+      // No filter, use all data
+      setFilteredGraphData(rawGraphData);
+      return;
+    }
+    
+    // Filter nodes by status
+    const filteredNodes = rawGraphData.nodes.filter(node => 
+      node.status === statusFilter
+    );
+    
+    // Get IDs of filtered nodes
+    const filteredNodeIds = new Set(filteredNodes.map(node => node.id));
+    
+    // Filter links that connect filtered nodes
+    const filteredLinks = rawGraphData.links.filter(link => 
+      filteredNodeIds.has(link.source as string) && filteredNodeIds.has(link.target as string)
+    );
+    
+    setFilteredGraphData({
+      nodes: filteredNodes,
+      links: filteredLinks
+    });
+  }, [rawGraphData, statusFilter, showLabels, showArrows]);
+  
+  // Expose reset zoom method
+  const resetZoom = () => {
+    if (graphRef.current) {
+      graphRef.current.centerAt(0, 0, 1000);
+      graphRef.current.zoom(1, 1000);
+    }
+  };
+  
+  // Make the method available through the ref
+  useEffect(() => {
+    if (graphRef.current) {
+      graphRef.current.resetZoom = resetZoom;
+    }
+  }, [graphRef]);
+
   // Node click handler
   const handleNodeClick = (node: GraphNode) => {
     setSelectedNode(node);
@@ -102,22 +160,23 @@ export default function RelationshipGraph({
 
   return (
     <div className="relative">
-      <div style={{ height: `${height}px`, width }}>
-        {graphData && (
+      <div style={{ height: `${height}px`, width }} className="bg-white">
+        {filteredGraphData && (
           <ForceGraph2D
             ref={graphRef}
-            graphData={graphData}
+            graphData={filteredGraphData}
             nodeRelSize={8}
             nodeLabel={(node: any) => `${node.name} (${node.jurisdiction})\nStatus: ${node.status}`}
             nodeColor={(node: any) => STATUS_COLORS[node.status] || STATUS_COLORS.UNKNOWN}
-            linkDirectionalArrowLength={5}
+            linkDirectionalArrowLength={showArrows ? 5 : 0}
             linkDirectionalArrowRelPos={1}
-            linkDirectionalParticles={2}
+            linkDirectionalParticles={showArrows ? 2 : 0}
             linkDirectionalParticleSpeed={0.005}
             linkLabel={(link: any) => `${link.value}% ownership`}
             onNodeClick={handleNodeClick}
             cooldownTicks={100}
             linkWidth={link => 1.5}
+            backgroundColor="#ffffff"
             nodeCanvasObject={(node: any, ctx, globalScale) => {
               // Node visualization
               const label = node.name;
@@ -142,17 +201,41 @@ export default function RelationshipGraph({
                 ctx.stroke();
               }
               
-              // Draw text below the node
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-              ctx.fillText(label, node.x || 0, (node.y || 0) + 12);
-              
-              // Draw status indicator
-              const statusLabel = node.status.split('_').join(' ');
-              ctx.font = `${fontSize * 0.8}px Sans-Serif`;
-              ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-              ctx.fillText(statusLabel, node.x || 0, (node.y || 0) + 24);
+              // Draw text below the node if showLabels is true
+              if (showLabels) {
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Create background for text to ensure visibility in any mode
+                const textWidth = ctx.measureText(label).width;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.fillRect(
+                  (node.x || 0) - textWidth/2 - 2,
+                  (node.y || 0) + 12 - fontSize/2,
+                  textWidth + 4,
+                  fontSize + 2
+                );
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.fillText(label, node.x || 0, (node.y || 0) + 12);
+                
+                // Draw status indicator
+                const statusLabel = node.status.split('_').join(' ');
+                ctx.font = `${fontSize * 0.8}px Sans-Serif`;
+                
+                // Create background for status text
+                const statusWidth = ctx.measureText(statusLabel).width;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.fillRect(
+                  (node.x || 0) - statusWidth/2 - 2,
+                  (node.y || 0) + 24 - (fontSize * 0.8)/2,
+                  statusWidth + 4,
+                  (fontSize * 0.8) + 2
+                );
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillText(statusLabel, node.x || 0, (node.y || 0) + 24);
+              }
             }}
           />
         )}
@@ -172,7 +255,7 @@ export default function RelationshipGraph({
         )}
         
         {/* Empty state */}
-        {!loading && !error && graphData && graphData.nodes.length === 0 && (
+        {!loading && !error && filteredGraphData && filteredGraphData.nodes.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/70">
             <p className="text-gray-500">No relationship data available</p>
           </div>
@@ -215,21 +298,21 @@ export default function RelationshipGraph({
             </div>
             
             {/* Relationship details */}
-            {graphData && (
+            {filteredGraphData && (
               <>
                 <div className="mt-4 mb-2">
                   <h4 className="font-medium text-gray-700 border-b pb-1">Relationships</h4>
                 </div>
                 
                 {/* Parent companies */}
-                {graphData.links.filter(link => link.target === selectedNode.id).length > 0 && (
+                {filteredGraphData.links.filter(link => link.target === selectedNode.id).length > 0 && (
                   <div>
                     <span className="font-medium">Owned by:</span>
                     <ul className="list-disc list-inside ml-2 mt-1">
-                      {graphData.links
+                      {filteredGraphData.links
                         .filter(link => link.target === selectedNode.id)
                         .map(link => {
-                          const parentNode = graphData.nodes.find(n => n.id === link.source);
+                          const parentNode = filteredGraphData.nodes.find(n => n.id === link.source);
                           return (
                             <li key={`parent-${link.source}`} className="text-xs">
                               {parentNode?.name} ({link.value}%)
@@ -241,14 +324,14 @@ export default function RelationshipGraph({
                 )}
                 
                 {/* Subsidiary companies */}
-                {graphData.links.filter(link => link.source === selectedNode.id).length > 0 && (
+                {filteredGraphData.links.filter(link => link.source === selectedNode.id).length > 0 && (
                   <div className="mt-2">
                     <span className="font-medium">Owns:</span>
                     <ul className="list-disc list-inside ml-2 mt-1">
-                      {graphData.links
+                      {filteredGraphData.links
                         .filter(link => link.source === selectedNode.id)
                         .map(link => {
-                          const subsidNode = graphData.nodes.find(n => n.id === link.target);
+                          const subsidNode = filteredGraphData.nodes.find(n => n.id === link.target);
                           return (
                             <li key={`subsidiary-${link.target}`} className="text-xs">
                               {subsidNode?.name} ({link.value}%)

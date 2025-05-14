@@ -2,7 +2,7 @@ import React, { useState, FormEvent } from "react";
 import styles from './SearchForm.module.css';
 
 /** Search provider options */
-export type SearchProvider = 'dataaxle' | 'edgar' | 'sos';
+export type SearchProvider = 'cobalt' | 'edgar' | 'sos';
 
 /** Params sent to the backend search endpoint */
 export interface SearchParams {
@@ -10,8 +10,10 @@ export interface SearchParams {
   q: string;
   /** Two-letter state code; empty string === "all states" */
   state?: string;
-  /** Search provider (Data Axle, EDGAR, or SoS) */
+  /** Search provider (Cobalt, EDGAR, or SoS) */
   provider?: SearchProvider;
+  /** Whether to use Cobalt Intelligence API */
+  use_cobalt?: boolean;
 }
 
 interface SearchFormProps {
@@ -25,29 +27,71 @@ interface SearchFormProps {
   initialProvider?: SearchProvider;
 }
 
-/** Minimal list for now – extend when other scrapers are added */
+/** Complete list of US states and territories */
 const STATES = [
   { code: "", label: "All States" },
-  { code: "DE", label: "Delaware" },
+  { code: "AL", label: "Alabama" },
+  { code: "AK", label: "Alaska" },
+  { code: "AZ", label: "Arizona" },
+  { code: "AR", label: "Arkansas" },
   { code: "CA", label: "California" },
-  { code: "NY", label: "New York" },
-  { code: "TX", label: "Texas" },
+  { code: "CO", label: "Colorado" },
+  { code: "CT", label: "Connecticut" },
+  { code: "DE", label: "Delaware" },
+  { code: "DC", label: "District of Columbia" },
   { code: "FL", label: "Florida" },
+  { code: "GA", label: "Georgia" },
+  { code: "HI", label: "Hawaii" },
+  { code: "ID", label: "Idaho" },
   { code: "IL", label: "Illinois" },
-  { code: "WA", label: "Washington" },
+  { code: "IN", label: "Indiana" },
+  { code: "IA", label: "Iowa" },
+  { code: "KS", label: "Kansas" },
+  { code: "KY", label: "Kentucky" },
+  { code: "LA", label: "Louisiana" },
+  { code: "ME", label: "Maine" },
+  { code: "MD", label: "Maryland" },
   { code: "MA", label: "Massachusetts" },
+  { code: "MI", label: "Michigan" },
+  { code: "MN", label: "Minnesota" },
+  { code: "MS", label: "Mississippi" },
+  { code: "MO", label: "Missouri" },
+  { code: "MT", label: "Montana" },
+  { code: "NE", label: "Nebraska" },
+  { code: "NV", label: "Nevada" },
+  { code: "NH", label: "New Hampshire" },
+  { code: "NJ", label: "New Jersey" },
+  { code: "NM", label: "New Mexico" },
+  { code: "NY", label: "New York" },
+  { code: "NC", label: "North Carolina" },
+  { code: "ND", label: "North Dakota" },
+  { code: "OH", label: "Ohio" },
+  { code: "OK", label: "Oklahoma" },
+  { code: "OR", label: "Oregon" },
+  { code: "PA", label: "Pennsylvania" },
+  { code: "RI", label: "Rhode Island" },
+  { code: "SC", label: "South Carolina" },
+  { code: "SD", label: "South Dakota" },
+  { code: "TN", label: "Tennessee" },
+  { code: "TX", label: "Texas" },
+  { code: "UT", label: "Utah" },
+  { code: "VT", label: "Vermont" },
+  { code: "VA", label: "Virginia" },
+  { code: "WA", label: "Washington" },
+  { code: "WV", label: "West Virginia" },
+  { code: "WI", label: "Wisconsin" },
+  { code: "WY", label: "Wyoming" },
 ];
 
 /**
- * Stand-alone search widget used on the Dashboard (and later on a
- * global header).  Keeps its own local form state and emits the query
- * via `props.onSearch`.
+ * Stand-alone search widget used on the Dashboard.
+ * Keeps its own local form state and emits the query via `props.onSearch`.
  */
 export const SearchForm: React.FC<SearchFormProps> = ({ 
   onSearch, 
   title = "Corporate Entity Search",
   description = "Search for business entities across multiple states and jurisdictions.",
-  initialProvider = 'dataaxle'
+  initialProvider = 'cobalt'
 }) => {
   const [q, setQ] = useState("");
   const [state, setState] = useState("");
@@ -57,10 +101,13 @@ export const SearchForm: React.FC<SearchFormProps> = ({
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!q.trim()) return; // ignore empty queries
+    
+    // Send search params including the use_cobalt flag for backward compatibility
     onSearch({ 
       q: q.trim(), 
       state: state || undefined,
-      provider 
+      provider,
+      use_cobalt: provider === 'cobalt' // Set use_cobalt flag for compatibility
     });
   };
 
@@ -71,36 +118,37 @@ export const SearchForm: React.FC<SearchFormProps> = ({
       
       <form onSubmit={handleSubmit}>
         {/* Search provider selection */}
-        <div className="mb-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                className="form-radio h-4 w-4 text-indigo-600"
-                checked={provider === 'dataaxle'}
-                onChange={() => setProvider('dataaxle')}
-              />
-              <span className="ml-2 text-sm">Data Axle</span>
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                className="form-radio h-4 w-4 text-indigo-600"
-                checked={provider === 'edgar'}
-                onChange={() => setProvider('edgar')}
-              />
-              <span className="ml-2 text-sm">SEC EDGAR</span>
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                className="form-radio h-4 w-4 text-indigo-600"
-                checked={provider === 'sos'}
-                onChange={() => setProvider('sos')}
-              />
-              <span className="ml-2 text-sm">Secretary of State</span>
-            </label>
-          </div>
+        <div className={styles.radioGroup}>
+          <label className={`${styles.radioLabel} ${provider === 'cobalt' ? 'bg-indigo-50 border border-indigo-100' : ''}`}>
+            <input
+              type="radio"
+              name="searchProvider"
+              className={styles.radioInput}
+              checked={provider === 'cobalt'}
+              onChange={() => setProvider('cobalt')}
+            />
+            <span className={styles.radioText}>Cobalt Intelligence</span>
+          </label>
+          <label className={`${styles.radioLabel} ${provider === 'edgar' ? 'bg-indigo-50 border border-indigo-100' : ''}`}>
+            <input
+              type="radio"
+              name="searchProvider"
+              className={styles.radioInput}
+              checked={provider === 'edgar'}
+              onChange={() => setProvider('edgar')}
+            />
+            <span className={styles.radioText}>SEC EDGAR</span>
+          </label>
+          <label className={`${styles.radioLabel} ${provider === 'sos' ? 'bg-indigo-50 border border-indigo-100' : ''}`}>
+            <input
+              type="radio"
+              name="searchProvider"
+              className={styles.radioInput}
+              checked={provider === 'sos'}
+              onChange={() => setProvider('sos')}
+            />
+            <span className={styles.radioText}>Secretary of State</span>
+          </label>
         </div>
         
         <div className={styles.inputGroup}>
@@ -113,8 +161,9 @@ export const SearchForm: React.FC<SearchFormProps> = ({
               type="text"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder={provider === 'edgar' ? "Apple Inc. or AAPL" : "ACME LLC"}
+              placeholder={provider === 'edgar' ? "Apple Inc. or AAPL" : "University Health Foundation"}
               className={styles.formControl}
+              autoFocus
             />
           </div>
 

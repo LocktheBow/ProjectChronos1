@@ -6,6 +6,7 @@ interface ShellCompany {
   slug: string;
   name: string;
   risk_score: number;
+  factors?: string[]; // Optional list of risk factors
 }
 
 interface ShellDetectionProps {
@@ -32,6 +33,7 @@ export default function ShellDetection({ pollInterval = 0 }: ShellDetectionProps
         }
       } catch (err) {
         if (isMounted && (err as DOMException)?.name !== 'AbortError') {
+          console.error("Shell detection error:", err);
           setError(err instanceof Error ? err : new Error(String(err)));
         }
       } finally {
@@ -86,10 +88,21 @@ export default function ShellDetection({ pollInterval = 0 }: ShellDetectionProps
                 </span>
               </div>
               <div className="mt-2">
-                <p className="text-sm text-gray-600">
-                  This entity shows patterns common to shell companies, including unusual ownership structure
-                  and limited operational footprint.
-                </p>
+                {company.factors && company.factors.length > 0 ? (
+                  <div className="text-sm text-gray-600">
+                    <p className="mb-1">Risk factors:</p>
+                    <ul className="list-disc list-inside pl-2">
+                      {company.factors.map((factor, idx) => (
+                        <li key={idx}>{factor}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-600">
+                    This entity shows patterns common to shell companies, including unusual ownership structure
+                    and limited operational footprint.
+                  </p>
+                )}
                 <div className="mt-3 flex justify-end">
                   <a 
                     href={`/entities/${company.slug}`} 

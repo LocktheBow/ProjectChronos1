@@ -55,10 +55,33 @@ class Settings(BaseSettings):
     """Pydantic model for application settings, loaded from environment variables."""
     
     # Data Axle API settings
-    data_axle_key: str = Field(default=os.environ.get("DATA_AXLE_KEY", "b22dabd68be03d0d1bd0aaad"), description="Data Axle API key")
+    data_axle_key: str = Field(
+        default=os.environ.get("DATA_AXLE_KEY", "pk_live_b22dabd68be03d0d1bd0aaad"), 
+        description="Data Axle API token (X-AUTH-TOKEN header)"
+    )
     data_axle_base: HttpUrl = Field(
-        default=os.environ.get("DATA_AXLE_BASE_URL", "https://api.data-axle.com/direct/v1"),
+        default=os.environ.get("DATA_AXLE_BASE_URL", "https://api.data-axle.com/v1"),
         description="Data Axle API base URL"
+    )
+    
+    # OpenCorporates API settings
+    opencorp_api_token: str = Field(
+        default=os.environ.get("OPENCORP_API_TOKEN", ""),
+        description="OpenCorporates API token"
+    )
+    opencorp_base: HttpUrl = Field(
+        default=os.environ.get("OPENCORP_BASE_URL", "https://api.opencorporates.com/v0.4"),
+        description="OpenCorporates API base URL"
+    )
+    
+    # Cobalt Intelligence API settings
+    cobalt_api_key: str = Field(
+        default=os.environ.get("COBALT_API_KEY", "BNqp0a66351M98UIos2oq6Y8W4dTgH0L7gpjuOZe"),
+        description="Cobalt Intelligence API key (x-api-key header)"
+    )
+    cobalt_base: HttpUrl = Field(
+        default=os.environ.get("COBALT_BASE_URL", "https://apigateway.cobaltintelligence.com/v1"),
+        description="Cobalt Intelligence API base URL"
     )
     
     # SEC EDGAR API settings

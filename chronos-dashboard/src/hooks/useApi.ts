@@ -8,8 +8,8 @@
  *   VITE_API_BASE="https://chronos.example.com"
  */
 const API_BASE =
-  //   vite env            explicit fallback →   scheme//host:8001
-  import.meta.env.VITE_API_BASE ?? `//${window.location.hostname}:8001`;
+  //   vite env            explicit fallback →   explicit http scheme
+  import.meta.env.VITE_API_BASE ?? `http://${window.location.hostname}:8001`;
 
 export async function api<T>(
   path: string,
@@ -175,15 +175,18 @@ function saveSearchToCache(query: string, state: string | undefined, results: En
   }
 }
 
+/**
+ * Search entities using the main search endpoint (which now uses Cobalt Intelligence)
+ */
 export function searchEntities(
   q: string,
   state?: string,
   signal?: AbortSignal,
-  useDataAxle: boolean = true
+  useCobalt: boolean = true
 ): Promise<EntityHit[]> {
   const params = new URLSearchParams({ q });
   if (state) params.append("state", state);
-  if (useDataAxle !== undefined) params.append("use_data_axle", String(useDataAxle));
+  if (useCobalt !== undefined) params.append("use_cobalt", String(useCobalt));
   
   return api<EntityHit[]>(`/search?${params.toString()}`, { signal })
     .then(results => {
@@ -193,6 +196,9 @@ export function searchEntities(
     });
 }
 
+/**
+ * Search using state-specific Secretary of State scrapers
+ */
 export function searchSos(
   q: string,
   jurisdiction?: string,
@@ -210,9 +216,9 @@ export function searchSos(
 }
 
 /**
- * Search using Data Axle API
+ * Search using Cobalt Intelligence API
  */
-export function searchAxle(
+export function searchCobalt(
   q: string,
   state?: string,
   signal?: AbortSignal,
@@ -220,7 +226,7 @@ export function searchAxle(
   const params = new URLSearchParams({ q });
   if (state) params.append("state", state);
   
-  return api<EntityHit[]>(`/axle/search?${params.toString()}`, { signal })
+  return api<EntityHit[]>(`/cobalt/search?${params.toString()}`, { signal })
     .then(results => {
       // Cache successful results
       saveSearchToCache(q, state, results);

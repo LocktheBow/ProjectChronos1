@@ -8,7 +8,7 @@ FastAPI dependency providers.
 request talks to the persistent SQLite store instead of the in‑memory
 PortfolioManager.
 
-Also includes dependencies for external API clients like Data Axle and SEC EDGAR.
+Also includes dependencies for external API clients like OpenCorporates, Data Axle, and SEC EDGAR.
 """
 
 from functools import lru_cache
@@ -20,6 +20,8 @@ from httpx import AsyncClient
 from chronos.portfolio_db import DBPortfolioManager
 from chronos.relationships import RelationshipGraph
 from chronos.settings import settings
+from chronos.scrapers.opencorp import OpenCorporatesScraper
+from chronos.scrapers.cobalt import CobaltScraper
 
 
 @lru_cache
@@ -40,6 +42,18 @@ def get_settings():
     return settings
 
 
+@lru_cache
+def get_opencorp_scraper():
+    """Return a configured OpenCorporates scraper."""
+    return OpenCorporatesScraper(api_token=settings.opencorp_api_token)
+
+
+@lru_cache
+def get_cobalt_scraper():
+    """Return a configured Cobalt Intelligence scraper."""
+    return CobaltScraper(api_key=settings.cobalt_api_key)
+
+
 async def get_data_axle(settings=Depends(get_settings)) -> AsyncGenerator[AsyncClient, None]:
     """
     Return an AsyncClient configured for Data Axle API access.
@@ -53,11 +67,17 @@ async def get_data_axle(settings=Depends(get_settings)) -> AsyncGenerator[AsyncC
     async with AsyncClient(
         base_url=str(settings.data_axle_base),
         headers={
+            # X-AUTH-TOKEN is the standard header for Data Axle API
+            "X-AUTH-TOKEN": settings.data_axle_key,
+            # For backward compatibility, also include x-api-key
             "x-api-key": settings.data_axle_key,
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "User-Agent": f"{settings.sec_ua_app} ({settings.sec_ua_email})"  # polite UA
-        }
+            "User-Agent": f"{settings.sec_ua_app} ({settings.sec_ua_email})",  # polite UA
+            # Additional headers that might be needed for Data Axle API
+            "Cache-Control": "no-cache"
+        },
+        timeout=30.0  # Increased timeout for API requests
     ) as client:
         yield client
 

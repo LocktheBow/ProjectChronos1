@@ -1,71 +1,51 @@
-/* Base styles */
-html {
-  scroll-behavior: smooth;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light;
+  color: rgba(0, 0, 0, 0.87);
+  background-color: #f9fafb;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  color: #1E293B;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  background-color: #F9FAFB;
   margin: 0;
-  padding: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
 }
 
-/* Scrollbar styles */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-thumb {
-  background-color: #CBD5E1;
-  border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background-color: #94A3B8;
+.bg-white {
+  background-color: #ffffff;
 }
 
-/* Component styles */
-.card {
-  background-color: white;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  border-radius: 1rem;
-  border: 1px solid #E2E8F0;
+/* Make sure fullscreen graph has white background */
+.graph-container:-webkit-full-screen,
+.graph-container:-ms-fullscreen,
+.graph-container:fullscreen {
+  background-color: #ffffff !important;
 }
 
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border-radius: 0.5rem;
-  background-color: #4F46E5;
-  color: white;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  transition: background-color 0.2s;
-}
-.btn-primary:hover {
-  background-color: #4338CA;
-}
-.btn-primary:disabled {
-  opacity: 0.5;
-  pointer-events: none;
+/* Ensure nested content in fullscreen also has background */
+.graph-container:-webkit-full-screen canvas,
+.graph-container:-ms-fullscreen canvas,
+.graph-container:fullscreen canvas {
+  background-color: #ffffff !important;
 }
 
-.input {
-  width: 100%;
-  border-radius: 0.5rem;
-  border: 1px solid #CBD5E1;
-  padding: 0.75rem;
-  outline: none;
-}
-.input:focus {
-  border-color: #4F46E5;
-  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
-}
-
-/* Utility classes */
-.text-balance {
-  text-wrap: balance;
+/* Make links visible in fullscreen */
+.graph-container:-webkit-full-screen path,
+.graph-container:-ms-fullscreen path,
+.graph-container:fullscreen path {
+  stroke: #000000 !important;
 }

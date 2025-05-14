@@ -105,3 +105,34 @@
   background-color: var(--c-slate-50);
   border-color: var(--c-slate-400);
 }
+
+/* New styles for the radio button group */
+.radioGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.15s;
+}
+
+.radioLabel:hover {
+  background-color: var(--c-slate-50);
+}
+
+.radioInput {
+  margin-right: 0.5rem;
+}
+
+.radioText {
+  font-size: 0.875rem;
+  font-weight: var(--font-medium);
+  color: var(--c-slate-700);
+}

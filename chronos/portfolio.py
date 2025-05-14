@@ -66,3 +66,7 @@ class PortfolioManager:
 
     def __len__(self) -> int:
         return len(self._entities)
+        
+    def clear(self) -> None:
+        """Clear all entities from the portfolio."""
+        self._entities.clear()

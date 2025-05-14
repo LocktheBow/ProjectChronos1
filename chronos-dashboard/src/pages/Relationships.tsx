@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import RelationshipGraph from '../components/RelationshipGraph';
 import ShellDetection from '../components/ShellDetection';
 
@@ -6,6 +6,35 @@ const POLL_INTERVAL = 15000; // 15 seconds
 
 export default function Relationships() {
   const [showShellDetection, setShowShellDetection] = useState(true);
+  const [showLabels, setShowLabels] = useState(true);
+  const [showArrows, setShowArrows] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('');
+  const graphRef = useRef<any>(null);
+  
+  // Reset zoom to default view
+  const handleResetZoom = () => {
+    if (graphRef.current?.resetZoom) {
+      graphRef.current.resetZoom();
+    }
+  };
+  
+  // Toggle fullscreen
+  const handleFullScreen = () => {
+    const container = document.querySelector('.graph-container');
+    if (!container) return;
+    
+    if (!document.fullscreenElement) {
+      container.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+      // Add fullscreen class for styling
+      container.classList.add('fullscreen-mode');
+    } else {
+      document.exitFullscreen();
+      // Remove fullscreen class when exiting
+      container.classList.remove('fullscreen-mode');
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -25,13 +54,13 @@ export default function Relationships() {
               <div className="flex gap-2">
                 <button 
                   className="px-3 py-1 bg-white border border-gray-300 rounded text-sm hover:bg-[#F9FAFB]"
-                  onClick={() => {/* Implement zoom reset */}}
+                  onClick={handleResetZoom}
                 >
                   Reset Zoom
                 </button>
                 <button 
                   className="px-3 py-1 bg-white border border-gray-300 rounded text-sm hover:bg-[#F9FAFB]"
-                  onClick={() => {/* Implement full screen */}}
+                  onClick={handleFullScreen}
                 >
                   Full Screen
                 </button>
@@ -40,8 +69,15 @@ export default function Relationships() {
             <p className="text-sm text-gray-600 mb-4">
               Interactive visualization of corporate ownership relationships. Click on any entity to see details.
             </p>
-            <div className="mt-4">
-              <RelationshipGraph height={600} pollInterval={POLL_INTERVAL} />
+            <div className="mt-4 graph-container bg-white">
+              <RelationshipGraph 
+                height={600} 
+                pollInterval={POLL_INTERVAL}
+                showLabels={showLabels}
+                showArrows={showArrows}
+                statusFilter={statusFilter}
+                graphRef={graphRef}
+              />
             </div>
             <div className="mt-4 text-xs text-gray-500 flex flex-wrap gap-4">
               <div className="flex items-center">
@@ -76,7 +112,8 @@ export default function Relationships() {
                     type="checkbox" 
                     id="showLabels" 
                     className="mr-2" 
-                    defaultChecked 
+                    checked={showLabels}
+                    onChange={(e) => setShowLabels(e.target.checked)}
                   />
                   <label htmlFor="showLabels" className="text-sm">Show Labels</label>
                 </div>
@@ -85,14 +122,19 @@ export default function Relationships() {
                     type="checkbox" 
                     id="showArrows" 
                     className="mr-2" 
-                    defaultChecked 
+                    checked={showArrows}
+                    onChange={(e) => setShowArrows(e.target.checked)}
                   />
                   <label htmlFor="showArrows" className="text-sm">Show Arrows</label>
                 </div>
               </div>
               <div>
                 <label className="block text-sm text-gray-600 mb-1">Filter by Status</label>
-                <select className="w-full text-sm border border-gray-300 rounded px-2 py-1">
+                <select 
+                  className="w-full text-sm border border-gray-300 rounded px-2 py-1"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                >
                   <option value="">All Statuses</option>
                   <option value="ACTIVE">Active</option>
                   <option value="PENDING">Pending</option>
