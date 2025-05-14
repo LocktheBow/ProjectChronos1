@@ -171,14 +171,18 @@ export default function RelationshipGraph({
             nodeRelSize={8}
             nodeLabel={(node: any) => `${node.name} (${node.jurisdiction})\nStatus: ${node.status}`}
             nodeColor={(node: any) => STATUS_COLORS[node.status] || STATUS_COLORS.UNKNOWN}
-            linkDirectionalArrowLength={showArrows ? 5 : 0}
+            linkDirectionalArrowLength={showArrows ? 8 : 0}
             linkDirectionalArrowRelPos={1}
             linkDirectionalParticles={showArrows ? 2 : 0}
             linkDirectionalParticleSpeed={0.005}
             linkLabel={(link: any) => `${link.value}% ownership`}
             onNodeClick={handleNodeClick}
             cooldownTicks={100}
-            linkWidth={link => 1.5}
+            linkWidth={link => 2}
+            d3AlphaDecay={0.02}
+            d3VelocityDecay={0.3}
+            dagMode={null}
+            dagLevelDistance={50}
             backgroundColor="#ffffff"
             nodeCanvasObject={(node: any, ctx, globalScale) => {
               // Node visualization
@@ -187,7 +191,7 @@ export default function RelationshipGraph({
               ctx.font = `${fontSize}px Sans-Serif`;
               
               // Node size based on importance
-              const size = node.type === 'PRIMARY' ? 8 : 6;
+              const size = node.type === 'PRIMARY' ? 10 : 7;
               
               // Draw node circle
               ctx.beginPath();
@@ -198,7 +202,7 @@ export default function RelationshipGraph({
               // Add border for selected node
               if (selectedNode && node.id === selectedNode.id) {
                 ctx.beginPath();
-                ctx.arc(node.x || 0, node.y || 0, size + 2, 0, 2 * Math.PI);
+                ctx.arc(node.x || 0, node.y || 0, size + 3, 0, 2 * Math.PI);
                 ctx.strokeStyle = '#000';
                 ctx.lineWidth = 2 / globalScale;
                 ctx.stroke();
@@ -209,35 +213,55 @@ export default function RelationshipGraph({
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 
-                // Create background for text to ensure visibility in any mode
+                // Create solid background for text to ensure visibility in any mode
                 const textWidth = ctx.measureText(label).width;
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
                 ctx.fillRect(
-                  (node.x || 0) - textWidth/2 - 2,
-                  (node.y || 0) + 12 - fontSize/2,
-                  textWidth + 4,
-                  fontSize + 2
+                  (node.x || 0) - textWidth/2 - 4,
+                  (node.y || 0) + 12 - fontSize/2 - 1,
+                  textWidth + 8,
+                  fontSize + 4
                 );
                 
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                // Add a border around the label background
+                ctx.strokeStyle = 'rgba(220, 220, 220, 0.8)';
+                ctx.lineWidth = 1 / globalScale;
+                ctx.strokeRect(
+                  (node.x || 0) - textWidth/2 - 4,
+                  (node.y || 0) + 12 - fontSize/2 - 1,
+                  textWidth + 8,
+                  fontSize + 4
+                );
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
                 ctx.fillText(label, node.x || 0, (node.y || 0) + 12);
                 
                 // Draw status indicator
                 const statusLabel = node.status.split('_').join(' ');
                 ctx.font = `${fontSize * 0.8}px Sans-Serif`;
                 
-                // Create background for status text
+                // Create solid background for status text
                 const statusWidth = ctx.measureText(statusLabel).width;
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
                 ctx.fillRect(
-                  (node.x || 0) - statusWidth/2 - 2,
-                  (node.y || 0) + 24 - (fontSize * 0.8)/2,
-                  statusWidth + 4,
-                  (fontSize * 0.8) + 2
+                  (node.x || 0) - statusWidth/2 - 4,
+                  (node.y || 0) + 26 - (fontSize * 0.8)/2 - 1,
+                  statusWidth + 8,
+                  (fontSize * 0.8) + 4
                 );
                 
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-                ctx.fillText(statusLabel, node.x || 0, (node.y || 0) + 24);
+                // Add a border around the status background
+                ctx.strokeStyle = 'rgba(220, 220, 220, 0.8)';
+                ctx.lineWidth = 1 / globalScale;
+                ctx.strokeRect(
+                  (node.x || 0) - statusWidth/2 - 4,
+                  (node.y || 0) + 26 - (fontSize * 0.8)/2 - 1,
+                  statusWidth + 8,
+                  (fontSize * 0.8) + 4
+                );
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.fillText(statusLabel, node.x || 0, (node.y || 0) + 26);
               }
             }}
           />
