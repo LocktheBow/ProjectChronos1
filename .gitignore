@@ -176,3 +176,5 @@ cython_debug/
 
 **/.claude/settings.local.json
 chronos-dashboard/CLAUDE.md
+/chronos-dashboard/CLAUDE.md
+claaude.md
