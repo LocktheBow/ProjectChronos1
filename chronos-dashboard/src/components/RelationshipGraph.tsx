@@ -214,9 +214,9 @@ export default function RelationshipGraph({
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 
-                // Create semi-transparent background for text to ensure visibility in any mode
+                // Create very transparent background for text to ensure visibility in any mode
                 const textWidth = ctx.measureText(label).width;
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
                 ctx.fillRect(
                   (node.x || 0) - textWidth/2 - 2,
                   (node.y || 0) + 12 - fontSize/2,
@@ -231,9 +231,9 @@ export default function RelationshipGraph({
                 const statusLabel = node.status.split('_').join(' ');
                 ctx.font = `${fontSize * 0.8}px Sans-Serif`;
                 
-                // Create semi-transparent background for status text
+                // Create very transparent background for status text
                 const statusWidth = ctx.measureText(statusLabel).width;
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
                 ctx.fillRect(
                   (node.x || 0) - statusWidth/2 - 2,
                   (node.y || 0) + 24 - (fontSize * 0.8)/2,
